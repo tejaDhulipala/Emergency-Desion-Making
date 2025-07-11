@@ -56,6 +56,7 @@ class Plane:
                 self.glide_ratio -= 1
             else: 
                 self.glide_ratio -= 2
+        print(f"Glide Ratio: {self.glide_ratio}")
 
 
     def follow_instruction(self):
@@ -76,9 +77,10 @@ class Plane:
         self.heading = desired_heading_value
         self.update_glide_ratio()
         # Go straight in the desired direction
-        distance = ((self.pos_x - self.instruction.goal_y) ** 2 + (self.pos_y - self.instruction.goal_y) ** 2) ** 0.5
+        distance = ((self.pos_x - self.instruction.goal_x) ** 2 + (self.pos_y - self.instruction.goal_y) ** 2) ** 0.5
         glide_distance = self.glide_ratio * (self.alt - 50) / 6071
         self.instruction_completed = True
+        print(f"glide distance {glide_distance} distance {distance}")
         if glide_distance <= distance:
             self.alt -= glide_distance * 6071 / self.glide_ratio
             angle_rad = math.radians(self.heading)
@@ -90,7 +92,7 @@ class Plane:
             self.alt -= distance * 6071 / self.glide_ratio
             self.pos_x = self.instruction.goal_x
             self.pos_y = self.instruction.goal_y
-        print(f"({self.pos_x}nm, {self.pos_y}nm, {self.alt}ft)")
+        print(f"({self.pos_x}nm, {self.pos_y}nm, {self.alt}ft, {self.heading} degreees)")
     
     def initiate_landing(self):
         headwind = self.environment_variables.wind_strength * math.cos((self.environment_variables.wind_strength - self.heading) / 180 * math.pi)

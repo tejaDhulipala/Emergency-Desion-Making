@@ -12,7 +12,7 @@ TARGET_COLOR = (255, 100, 100)
 AFTER_TURN_COLOR = (0, 255, 100)
 ARROW_COLOR = (255, 255, 0)
 DOT_RADIUS = 8
-X_DISTANCE = 10 # X distance in nvm
+X_DISTANCE = 8 # X distance in nvm
 Y_DISTANCE = int(X_DISTANCE * HEIGHT / WIDTH)
 MARGIN = 30  # pixels
 
@@ -70,10 +70,12 @@ def main():
 
     # Initial plane state
     start_x, start_y = 8, 3
-    start_heading = 315  # degrees (north)
+    start_heading = 270  # degrees (north)
     env = EnvironmentVariables(wind_strength=0, wind_direction=0, temperature=15)
     instruction = Instruction(goal_x=10, goal_y=9.6, airspeed=80, bank_angle=30)
     plane = Plane(start_x, start_y, alt=800, airspeed=80, weight=2400, heading=start_heading, env_vars=env, inst=instruction)
+    print(f"Altitude: {plane.alt}. Weight: {plane.weight}. Heading: {plane.heading}. StartX: {plane.pos_x}. StartY: {plane.pos_y}")
+    print(f"Winds {round(env.wind_direction / 10)} @ {env.wind_strength}. Temperature {env.temperature}")
 
     running = True
     while running:
@@ -83,9 +85,9 @@ def main():
 
         screen.blit(background, (0, 0))
         ox, oy = scale(plane.pos_x, plane.pos_y)
-        plane.draw(screen, PLANE_COLOR, ox, oy, heading=plane.heading, radius=DOT_RADIUS, scale=scale)
         tx, ty = scale(plane.instruction.goal_x, plane.instruction.goal_y)
         pg.draw.circle(screen, TARGET_COLOR, (tx, ty), DOT_RADIUS)
+        plane.draw(screen, PLANE_COLOR, ox, oy, heading=plane.heading, radius=DOT_RADIUS, scale=scale)
         draw_ruler(screen, scale, WIDTH, HEIGHT)
         pg.display.flip()
         clock.tick(30)
