@@ -1,0 +1,16 @@
+| **Human Failure**                           | **Computer/Autopilot Equivalent**               | **Cause of Computer/System Failure**                                           |
+| ------------------------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------ |
+| **Slowed reflexes / delayed reaction**      | High latency; delayed command execution         | CPU overload, real-time thread blocking, thermal throttling, power instability |
+| **Tremors / uncoordinated movement**        | Actuator jitter or instability in control loops | PID tuning errors, hardware wear, voltage ripple, EMI                          |
+| **Paralysis / inability to move**           | Actuator failure; I/O bus stall                 | Burned-out motors, broken wires, particles on connectors                       |
+| **Blurred vision**                          | Noisy or degraded sensor input                  | Dirty cameras, fogged lenses, sensor aging, analog signal noise                |
+| **Hallucinations**                          | False data interpretation; adversarial input    | Sensor spoofing (GPS, lidar), adversarial ML attacks, data injection           |
+| **Impaired judgment / risk assessment**     | Faulty decision logic; poor prioritization      | Logic bug, corrupted configuration, memory bit flips                           |
+| **Confusion / inconsistent decisions**      | Sensor fusion conflict; unpredictable behavior  | Kalman filter divergence, inconsistent sensor rates, misaligned clocks         |
+| **Forgetfulness / lost memory**             | Loss of system state; reset loop                | RAM corruption, flash memory wear, power dips                                  |
+| **Disorientation / vertigo**                | Spatial drift; bad pose estimation              | IMU drift, compass interference, GPS spoofing, SLAM map misalignment           |
+| **Tunnel vision**                           | Over-reliance on single sensor                  | Sensor weighting bug, sensor failure with no fallback                          |
+| **Cognitive overload / inability to focus** | Resource contention; priority inversion         | Thread starvation, scheduler failure, memory leak                              |
+| **Sleepiness / fatigue**                    | Gradual performance degradation                 | Thermal degradation, capacitor aging, component fatigue                        |
+| **Panic / erratic behavior**                | Rapid oscillation between modes or decisions    | Race condition, mode-switch bug, watchdog misfire                              |
+| **Blackout / unconsciousness**              | Full system crash or freeze                     | Kernel panic, power failure, short circuit, firmware corruption                |

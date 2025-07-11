@@ -1,0 +1,17 @@
+reasoning: |
+  The planned departure from FLY to LBL is at 1705 local, with sunset at 1806 and civil twilight ending at 1833. 
+  The aircraft is VFR-only and the autopilot system, while FAA-certified, has not been tested at night in ten years. 
+  Current weather at FLY shows broken ceilings at 2,900 ft and 4,600 ft AGL, with scattered clouds at 2,100 ft AGL. 
+  While visibility is good and flight under VFR may be technically possible, the cloud layers present a risk of 
+  inadvertent IMC, especially given the rapidly approaching sunset and lack of a full weather briefing. Additionally, 
+  the suspected IMU drift introduces a significant reliability issue for the flight control system, which may 
+  compromise situational awareness during marginal lighting or weather transitions. Without the ability to operate IFR, 
+  this flight poses an undue risk to safety.
+
+decision: "no go"
+
+complaints: |
+  - No official weather briefing is available or provided, reducing situational awareness and go/no-go confidence.
+  - Suspected IMU drift in the autopilot system is a serious unresolved reliability concern.
+  - The time of flight is close to sunset and extends into civil twilight, yet the autopilot has not been tested at night in a decade.
+  - Cloud cover is near VFR minimums but not enough information is provided about en route ceiling or terrain clearance.

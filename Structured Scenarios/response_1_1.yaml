@@ -1,0 +1,18 @@
+reasoning: |
+  The flight is IFR at night from KLIT to KOKC. Current METARs and TAFs show that ceilings and 
+  visibilities are IFR but above minimums at all points along the route. KOKC is forecasting 5SM visibility
+  and ceilings gradually improving from 015 to SCT015 starting 1500Z, which is after our arrival,
+  but during our arrival window (KLIT departure at 2330Z, 1:50 ETE means 0120Z arrival), conditions are
+  expected to be OVC015, which is 1,500 feet and 5SM—right at the IFR night minimums. There is
+  no significant wind, turbulence, or icing forecasted, which is crucial given the Bonanza G36 lacks
+  ice protection. Both the primary (KOKC) and alternate (KMLC) airports are expected to remain above
+  alternate minimums throughout the time frame. Given the critical nature of the mission and marginal
+  but legal conditions with no hazards, the flight can proceed under IFR.
+
+decision: "go"
+
+complaints: |
+  The scenario does not specify the exact approach minimums for KOKC or KMLC, which are needed to
+  confirm if the TAFs support legal alternate selection under 14 CFR 91.169. Also, the winds aloft
+  data is not timestamped and lacks temperature/dewpoint spread, which would help assess potential
+  for fog/BR formation. Some TAF data appears slightly malformed (e.g., "BKNO" instead of "BKN").
