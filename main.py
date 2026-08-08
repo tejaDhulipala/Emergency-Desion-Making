@@ -56,19 +56,21 @@ def draw_ruler(screen, scale, size_nm, center_x, center_y):
 
     for sx, x_nm, sy, y_nm in ticks:
         if sx > x_label_col + CORNER_CLEARANCE:
-            label = font.render(f"{x_nm:.1f}", True, GRID_LABEL_COLOR)
+            label = font.render(f"{x_nm - center_x:+.1f}", True, GRID_LABEL_COLOR)
             screen.blit(label, (sx - label.get_width() // 2, y_label_row))
         if sy < y_label_row - CORNER_CLEARANCE:
-            label = font.render(f"{y_nm:.1f}", True, GRID_LABEL_COLOR)
+            label = font.render(f"{y_nm - center_y:+.1f}", True, GRID_LABEL_COLOR)
             screen.blit(label, (x_label_col, sy - label.get_height() // 2))
 
-def get_instruction_from_input():
+def get_instruction_from_input(plane):
+    """Prompts for a goal relative to the plane's current position (nm, east/north positive),
+    then converts it to the absolute goal_x/goal_y that Plane/Instruction operate on."""
     while True:
         try:
-            s = input("give instruction (goal_x goal_y airspeed bank_angle flaps forward_slip): ")
-            goal_x, goal_y, airspeed, bank_angle, flaps, forward_slip = s.split()
-            goal_x = float(goal_x)
-            goal_y = float(goal_y)
+            s = input("give instruction (rel_goal_x rel_goal_y airspeed bank_angle flaps forward_slip): ")
+            rel_goal_x, rel_goal_y, airspeed, bank_angle, flaps, forward_slip = s.split()
+            goal_x = plane.pos_x + float(rel_goal_x)
+            goal_y = plane.pos_y + float(rel_goal_y)
             airspeed = int(airspeed)
             bank_angle = int(bank_angle)
             flaps = int(flaps)
@@ -131,7 +133,7 @@ def main():
 
         # Get new instruction from user
         if not plane.landing:
-            goal_x, goal_y, airspeed, bank_angle, flaps, forward_slip = get_instruction_from_input()
+            goal_x, goal_y, airspeed, bank_angle, flaps, forward_slip = get_instruction_from_input(plane)
             new_instruction = Instruction(goal_x=goal_x, goal_y=goal_y, airspeed=airspeed, bank_angle=bank_angle, flaps=flaps, forward_slip=forward_slip)
             plane.give_instruction(new_instruction)
             plane.follow_instruction()
