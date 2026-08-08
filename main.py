@@ -4,7 +4,7 @@ import math
 from plane import Plane, EnvironmentVariables, Instruction
 
 # --- Visualization parameters ---
-BACKGROUND_IMAGE = "Photos/satelite_image.png"
+BACKGROUND_IMAGE = "Photos/scenario_1.png"
 # Set window size to match background image
 WIDTH, HEIGHT = 681, 338
 PLANE_COLOR = (255, 0, 0)  # Red
@@ -73,7 +73,7 @@ def main():
     start_heading = 270  # degrees (north)
     env = EnvironmentVariables(wind_strength=0, wind_direction=0, temperature=15)
     instruction = Instruction(goal_x=10, goal_y=9.6, airspeed=80, bank_angle=30)
-    plane = Plane(start_x, start_y, alt=800, airspeed=80, weight=2400, heading=start_heading, env_vars=env, inst=instruction)
+    plane = Plane(start_x, start_y, alt=8000, airspeed=80, weight=2400, heading=start_heading, env_vars=env, inst=instruction)
     print(f"Altitude: {plane.alt}. Weight: {plane.weight}. Heading: {plane.heading}. StartX: {plane.pos_x}. StartY: {plane.pos_y}")
     print(f"Winds {round(env.wind_direction / 10)} @ {env.wind_strength}. Temperature {env.temperature}")
 

@@ -136,8 +136,3 @@ class Plane:
             start_px, start_py = scale(x_start, y_start)
             end_px, end_py = scale(x_end, y_end)
             pg.draw.line(surface, (0, 0, 0), (start_px, start_py), (end_px, end_py), 4)
-        
-
-
-
-        
