@@ -10,6 +10,15 @@ TILE_URL = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/M
 HEADERS = {"User-Agent": "emergency-decision-making-sim/1.0"}
 
 
+def offset_latlon(lat, lon, dx_nm, dy_nm):
+    """Offset (lat, lon) by dx_nm east and dy_nm north using a flat-earth approximation."""
+    lat_deg_per_m = 1 / 111320.0
+    lon_deg_per_m = 1 / (111320.0 * math.cos(math.radians(lat)))
+    dx_m = dx_nm * NM_TO_M
+    dy_m = dy_nm * NM_TO_M
+    return lat + dy_m * lat_deg_per_m, lon + dx_m * lon_deg_per_m
+
+
 class SatelliteMap:
     def __init__(self):
         self.session = requests.Session()
