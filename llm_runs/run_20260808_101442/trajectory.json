@@ -1,0 +1,615 @@
+{
+  "summary": {
+    "landed": false,
+    "turns": 20,
+    "final_pos": [
+      -10.549999999999999,
+      -1.4000000000000004
+    ],
+    "final_alt": 262.6109215824023,
+    "aircraft_condition": "intact",
+    "model": "google/gemma-4-31b-it"
+  },
+  "turns": [
+    {
+      "turn": 0,
+      "pos_x": 0,
+      "pos_y": 0,
+      "alt": 1500,
+      "heading": 270,
+      "airspeed": 80,
+      "size_nm": 4.44362520819207,
+      "lat": 28.106733,
+      "lon": -80.679769,
+      "frame": "llm_runs/run_20260808_101442/frames/0000.png",
+      "llm_raw_response": "{\"rel_goal_x\": -1.5, \"rel_goal_y\": 0.0, \"airspeed\": 75, \"bank_angle\": 0, \"flaps\": 0, \"forward_slip\": false, \"reasoning\": \"Heading west towards the open green fields visible on the left side of the image to avoid the residential areas and buildings.\"}",
+      "llm_decision": {
+        "rel_goal_x": -1.5,
+        "rel_goal_y": 0.0,
+        "airspeed": 75,
+        "bank_angle": 5,
+        "flaps": 0,
+        "forward_slip": false,
+        "reasoning": "Heading west towards the open green fields visible on the left side of the image to avoid the residential areas and buildings."
+      },
+      "instruction": {
+        "goal_x": -1.5,
+        "goal_y": 0.0,
+        "airspeed": 75,
+        "bank_angle": 5,
+        "flaps": 0,
+        "forward_slip": false
+      }
+    },
+    {
+      "turn": 1,
+      "pos_x": -1.5,
+      "pos_y": 0.0,
+      "alt": 1379.1047387042584,
+      "heading": 270.0,
+      "airspeed": 80,
+      "size_nm": 4.08548305442892,
+      "lat": 28.106733,
+      "lon": -80.70806045274638,
+      "frame": "llm_runs/run_20260808_101442/frames/0001.png",
+      "llm_raw_response": "{\"rel_goal_x\": -1.5, \"rel_goal_y\": 0.0, \"airspeed\": 75, \"bank_angle\": 0, \"flaps\": 0, \"forward_slip\": false, \"reasoning\": \"The aircraft is currently over a mix of marsh and urban areas. To the west (heading 270), there is a large open marsh/field area that provides a safer landing zone than the densely populated residential and commercial areas to the east.\"}",
+      "llm_decision": {
+        "rel_goal_x": -1.5,
+        "rel_goal_y": 0.0,
+        "airspeed": 75,
+        "bank_angle": 5,
+        "flaps": 0,
+        "forward_slip": false,
+        "reasoning": "The aircraft is currently over a mix of marsh and urban areas. To the west (heading 270), there is a large open marsh/field area that provides a safer landing zone than the densely populated residential and commercial areas to the east."
+      },
+      "instruction": {
+        "goal_x": -3.0,
+        "goal_y": 0.0,
+        "airspeed": 75,
+        "bank_angle": 5,
+        "flaps": 0,
+        "forward_slip": false
+      }
+    },
+    {
+      "turn": 2,
+      "pos_x": -3.0,
+      "pos_y": 0.0,
+      "alt": 1258.3172325301866,
+      "heading": 270.0,
+      "airspeed": 80,
+      "size_nm": 3.7276601162490794,
+      "lat": 28.106733,
+      "lon": -80.73635190549278,
+      "frame": "llm_runs/run_20260808_101442/frames/0002.png",
+      "llm_raw_response": "{\"rel_goal_x\": -1.0, \"rel_goal_y\": 0.0, \"airspeed\": 75, \"bank_angle\": 0, \"flaps\": 0, \"forward_slip\": false, \"reasoning\": \"Maintaining current heading to reach the open field area to the west, avoiding the water body and built-up areas to the east.\"}",
+      "llm_decision": {
+        "rel_goal_x": -1.0,
+        "rel_goal_y": 0.0,
+        "airspeed": 75,
+        "bank_angle": 5,
+        "flaps": 0,
+        "forward_slip": false,
+        "reasoning": "Maintaining current heading to reach the open field area to the west, avoiding the water body and built-up areas to the east."
+      },
+      "instruction": {
+        "goal_x": -4.0,
+        "goal_y": 0.0,
+        "airspeed": 75,
+        "bank_angle": 5,
+        "flaps": 0,
+        "forward_slip": false
+      }
+    },
+    {
+      "turn": 3,
+      "pos_x": -4.0,
+      "pos_y": 0.0,
+      "alt": 1177.8638771966368,
+      "heading": 270.0,
+      "airspeed": 80,
+      "size_nm": 3.489323744353216,
+      "lat": 28.106733,
+      "lon": -80.75521287399037,
+      "frame": "llm_runs/run_20260808_101442/frames/0003.png",
+      "llm_raw_response": "{\"rel_goal_x\": -1.2, \"rel_goal_y\": 0.0, \"airspeed\": 75, \"bank_angle\": 0, \"flaps\": 10, \"forward_slip\": false, \"reasoning\": \"Continuing west toward the open agricultural fields to the left of the current position, which provide a much safer landing surface than the scrubland or water.\"}",
+      "llm_decision": {
+        "rel_goal_x": -1.2,
+        "rel_goal_y": 0.0,
+        "airspeed": 75,
+        "bank_angle": 5,
+        "flaps": 10,
+        "forward_slip": false,
+        "reasoning": "Continuing west toward the open agricultural fields to the left of the current position, which provide a much safer landing surface than the scrubland or water."
+      },
+      "instruction": {
+        "goal_x": -5.2,
+        "goal_y": 0.0,
+        "airspeed": 75,
+        "bank_angle": 5,
+        "flaps": 10,
+        "forward_slip": false
+      }
+    },
+    {
+      "turn": 4,
+      "pos_x": -5.2,
+      "pos_y": 0.0,
+      "alt": 1080.0819910532432,
+      "heading": 270.0,
+      "airspeed": 80,
+      "size_nm": 3.1996530415723154,
+      "lat": 28.106733,
+      "lon": -80.7778460361875,
+      "frame": "llm_runs/run_20260808_101442/frames/0004.png",
+      "llm_raw_response": "{\"rel_goal_x\": -0.5, \"rel_goal_y\": 0.0, \"airspeed\": 70, \"bank_angle\": 0, \"flaps\": 10, \"forward_slip\": false, \"reasoning\": \"Continuing glide toward the open flat fields to the west. Reducing airspeed and deploying partial flaps to manage descent profile for a landing in the clear agricultural area.\"}",
+      "llm_decision": {
+        "rel_goal_x": -0.5,
+        "rel_goal_y": 0.0,
+        "airspeed": 70,
+        "bank_angle": 5,
+        "flaps": 10,
+        "forward_slip": false,
+        "reasoning": "Continuing glide toward the open flat fields to the west. Reducing airspeed and deploying partial flaps to manage descent profile for a landing in the clear agricultural area."
+      },
+      "instruction": {
+        "goal_x": -5.7,
+        "goal_y": 0.0,
+        "airspeed": 70,
+        "bank_angle": 5,
+        "flaps": 10,
+        "forward_slip": false
+      }
+    },
+    {
+      "turn": 5,
+      "pos_x": -5.7,
+      "pos_y": 0.0,
+      "alt": 1039.369242455832,
+      "heading": 270.0,
+      "airspeed": 80,
+      "size_nm": 3.0790449109308202,
+      "lat": 28.106733,
+      "lon": -80.7872765204363,
+      "frame": "llm_runs/run_20260808_101442/frames/0005.png",
+      "llm_raw_response": "{\"rel_goal_x\": -0.5, \"rel_goal_y\": 0.0, \"airspeed\": 65, \"bank_angle\": 0, \"flaps\": 20, \"forward_slip\": false, \"reasoning\": \"The aircraft is at a low altitude. I am targeting the open field directly ahead to the west to ensure a safe touchdown.\"}",
+      "llm_decision": {
+        "rel_goal_x": -0.5,
+        "rel_goal_y": 0.0,
+        "airspeed": 65,
+        "bank_angle": 5,
+        "flaps": 20,
+        "forward_slip": false,
+        "reasoning": "The aircraft is at a low altitude. I am targeting the open field directly ahead to the west to ensure a safe touchdown."
+      },
+      "instruction": {
+        "goal_x": -6.2,
+        "goal_y": 0.0,
+        "airspeed": 65,
+        "bank_angle": 5,
+        "flaps": 20,
+        "forward_slip": false
+      }
+    },
+    {
+      "turn": 6,
+      "pos_x": -6.2,
+      "pos_y": 0.0,
+      "alt": 998.6688490973374,
+      "heading": 270.0,
+      "airspeed": 80,
+      "size_nm": 2.9584733816567272,
+      "lat": 28.106733,
+      "lon": -80.79670700468509,
+      "frame": "llm_runs/run_20260808_101442/frames/0006.png",
+      "llm_raw_response": "{\"rel_goal_x\": -0.5, \"rel_goal_y\": 0.0, \"airspeed\": 70, \"bank_angle\": 0, \"flaps\": 20, \"forward_slip\": false, \"reasoning\": \"Maintaining current heading towards the open field directly ahead. Reducing airspeed and deploying flaps to prepare for landing as altitude is low.\"}",
+      "llm_decision": {
+        "rel_goal_x": -0.5,
+        "rel_goal_y": 0.0,
+        "airspeed": 70,
+        "bank_angle": 5,
+        "flaps": 20,
+        "forward_slip": false,
+        "reasoning": "Maintaining current heading towards the open field directly ahead. Reducing airspeed and deploying flaps to prepare for landing as altitude is low."
+      },
+      "instruction": {
+        "goal_x": -6.7,
+        "goal_y": 0.0,
+        "airspeed": 70,
+        "bank_angle": 5,
+        "flaps": 20,
+        "forward_slip": false
+      }
+    },
+    {
+      "turn": 7,
+      "pos_x": -6.7,
+      "pos_y": 0.0,
+      "alt": 957.9807999572342,
+      "heading": 270.0,
+      "airspeed": 80,
+      "size_nm": 2.8379384211026473,
+      "lat": 28.106733,
+      "lon": -80.80613748893389,
+      "frame": "llm_runs/run_20260808_101442/frames/0007.png",
+      "llm_raw_response": "{\"rel_goal_x\": -0.5, \"rel_goal_y\": 0.0, \"airspeed\": 75, \"bank_angle\": 0, \"flaps\": 10, \"forward_slip\": false, \"reasoning\": \"Maintaining current heading toward the open field to the west. Lowering airspeed and deploying partial flaps to manage descent rate as altitude decreases.\"}",
+      "llm_decision": {
+        "rel_goal_x": -0.5,
+        "rel_goal_y": 0.0,
+        "airspeed": 75,
+        "bank_angle": 5,
+        "flaps": 10,
+        "forward_slip": false,
+        "reasoning": "Maintaining current heading toward the open field to the west. Lowering airspeed and deploying partial flaps to manage descent rate as altitude decreases."
+      },
+      "instruction": {
+        "goal_x": -7.2,
+        "goal_y": 0.0,
+        "airspeed": 75,
+        "bank_angle": 5,
+        "flaps": 10,
+        "forward_slip": false
+      }
+    },
+    {
+      "turn": 8,
+      "pos_x": -7.2,
+      "pos_y": 0.0,
+      "alt": 917.3050840313064,
+      "heading": 270.0,
+      "airspeed": 80,
+      "size_nm": 2.7174399966695058,
+      "lat": 28.106733,
+      "lon": -80.81556797318268,
+      "frame": "llm_runs/run_20260808_101442/frames/0008.png",
+      "llm_raw_response": "{\"rel_goal_x\": -0.5, \"rel_goal_y\": 0.0, \"airspeed\": 75, \"bank_angle\": 0, \"flaps\": 10, \"forward_slip\": false, \"reasoning\": \"Maintaining heading 270 to land in the open field directly ahead. Reducing airspeed and deploying initial flaps to manage glide slope as altitude is low.\"}",
+      "llm_decision": {
+        "rel_goal_x": -0.5,
+        "rel_goal_y": 0.0,
+        "airspeed": 75,
+        "bank_angle": 5,
+        "flaps": 10,
+        "forward_slip": false,
+        "reasoning": "Maintaining heading 270 to land in the open field directly ahead. Reducing airspeed and deploying initial flaps to manage glide slope as altitude is low."
+      },
+      "instruction": {
+        "goal_x": -7.7,
+        "goal_y": 0.0,
+        "airspeed": 75,
+        "bank_angle": 5,
+        "flaps": 10,
+        "forward_slip": false
+      }
+    },
+    {
+      "turn": 9,
+      "pos_x": -7.7,
+      "pos_y": 0.0,
+      "alt": 876.6416903316134,
+      "heading": 270.0,
+      "airspeed": 80,
+      "size_nm": 2.5969780758064425,
+      "lat": 28.106733,
+      "lon": -80.82499845743148,
+      "frame": "llm_runs/run_20260808_101442/frames/0009.png",
+      "llm_raw_response": "{\"rel_goal_x\": -0.5, \"rel_goal_y\": 0.0, \"airspeed\": 70, \"bank_angle\": 0, \"flaps\": 20, \"forward_slip\": false, \"reasoning\": \"Continuing straight ahead to the open field directly west of the current position to ensure a safe landing.\"}",
+      "llm_decision": {
+        "rel_goal_x": -0.5,
+        "rel_goal_y": 0.0,
+        "airspeed": 70,
+        "bank_angle": 5,
+        "flaps": 20,
+        "forward_slip": false,
+        "reasoning": "Continuing straight ahead to the open field directly west of the current position to ensure a safe landing."
+      },
+      "instruction": {
+        "goal_x": -8.2,
+        "goal_y": 0.0,
+        "airspeed": 70,
+        "bank_angle": 5,
+        "flaps": 20,
+        "forward_slip": false
+      }
+    },
+    {
+      "turn": 10,
+      "pos_x": -8.2,
+      "pos_y": 0.0,
+      "alt": 835.9906078864574,
+      "heading": 270.0,
+      "airspeed": 80,
+      "size_nm": 2.476552626010716,
+      "lat": 28.106733,
+      "lon": -80.83442894168029,
+      "frame": "llm_runs/run_20260808_101442/frames/0010.png",
+      "llm_raw_response": "{\"rel_goal_x\": -0.5, \"rel_goal_y\": 0.0, \"airspeed\": 70, \"bank_angle\": 0, \"flaps\": 20, \"forward_slip\": false, \"reasoning\": \"Maintaining heading 270 to land in the open field directly ahead. Reducing airspeed and deploying flaps to stabilize the final approach.\"}",
+      "llm_decision": {
+        "rel_goal_x": -0.5,
+        "rel_goal_y": 0.0,
+        "airspeed": 70,
+        "bank_angle": 5,
+        "flaps": 20,
+        "forward_slip": false,
+        "reasoning": "Maintaining heading 270 to land in the open field directly ahead. Reducing airspeed and deploying flaps to stabilize the final approach."
+      },
+      "instruction": {
+        "goal_x": -8.7,
+        "goal_y": 0.0,
+        "airspeed": 70,
+        "bank_angle": 5,
+        "flaps": 20,
+        "forward_slip": false
+      }
+    },
+    {
+      "turn": 11,
+      "pos_x": -8.7,
+      "pos_y": 0.0,
+      "alt": 795.3518257403485,
+      "heading": 270.0,
+      "airspeed": 80,
+      "size_nm": 2.3561636148275995,
+      "lat": 28.106733,
+      "lon": -80.84385942592908,
+      "frame": "llm_runs/run_20260808_101442/frames/0011.png",
+      "llm_raw_response": "{\"rel_goal_x\": -0.6, \"rel_goal_y\": 0.0, \"airspeed\": 70, \"bank_angle\": 0, \"flaps\": 20, \"forward_slip\": false, \"reasoning\": \"Maintaining heading 270 to land in the open field ahead. Reducing airspeed and deploying flaps to prepare for touchdown.\"}",
+      "llm_decision": {
+        "rel_goal_x": -0.6,
+        "rel_goal_y": 0.0,
+        "airspeed": 70,
+        "bank_angle": 5,
+        "flaps": 20,
+        "forward_slip": false,
+        "reasoning": "Maintaining heading 270 to land in the open field ahead. Reducing airspeed and deploying flaps to prepare for touchdown."
+      },
+      "instruction": {
+        "goal_x": -9.299999999999999,
+        "goal_y": 0.0,
+        "airspeed": 70,
+        "bank_angle": 5,
+        "flaps": 20,
+        "forward_slip": false
+      }
+    },
+    {
+      "turn": 12,
+      "pos_x": -9.299999999999999,
+      "pos_y": 0.0,
+      "alt": 746.6000343966974,
+      "heading": 270.0,
+      "airspeed": 80,
+      "size_nm": 2.211740488854821,
+      "lat": 28.106733,
+      "lon": -80.85517600702764,
+      "frame": "llm_runs/run_20260808_101442/frames/0012.png",
+      "llm_raw_response": "{\"rel_goal_x\": -0.1, \"rel_goal_y\": 0.0, \"airspeed\": 65, \"bank_angle\": 0, \"flaps\": 20, \"forward_slip\": false, \"reasoning\": \"The aircraft is very low (747 ft). I am currently over a flat, open field. I will maintain my heading to land in the open area immediately ahead to avoid the forested area to the west.\"}",
+      "llm_decision": {
+        "rel_goal_x": -0.1,
+        "rel_goal_y": 0.0,
+        "airspeed": 65,
+        "bank_angle": 5,
+        "flaps": 20,
+        "forward_slip": false,
+        "reasoning": "The aircraft is very low (747 ft). I am currently over a flat, open field. I will maintain my heading to land in the open area immediately ahead to avoid the forested area to the west."
+      },
+      "instruction": {
+        "goal_x": -9.399999999999999,
+        "goal_y": 0.0,
+        "airspeed": 65,
+        "bank_angle": 5,
+        "flaps": 20,
+        "forward_slip": false
+      }
+    },
+    {
+      "turn": 13,
+      "pos_x": -9.399999999999999,
+      "pos_y": 0.0,
+      "alt": 738.4776824913698,
+      "heading": 270.0,
+      "airspeed": 80,
+      "size_nm": 2.187678697070607,
+      "lat": 28.106733,
+      "lon": -80.8570621038774,
+      "frame": "llm_runs/run_20260808_101442/frames/0013.png",
+      "llm_raw_response": "{\"rel_goal_x\": -0.6, \"rel_goal_y\": 0.0, \"airspeed\": 75, \"bank_angle\": 0, \"flaps\": 20, \"forward_slip\": false, \"reasoning\": \"Continuing glide toward the open field to the west. Lowering airspeed and increasing flaps to manage the final descent profile.\"}",
+      "llm_decision": {
+        "rel_goal_x": -0.6,
+        "rel_goal_y": 0.0,
+        "airspeed": 75,
+        "bank_angle": 5,
+        "flaps": 20,
+        "forward_slip": false,
+        "reasoning": "Continuing glide toward the open field to the west. Lowering airspeed and increasing flaps to manage the final descent profile."
+      },
+      "instruction": {
+        "goal_x": -9.999999999999998,
+        "goal_y": 0.0,
+        "airspeed": 75,
+        "bank_angle": 5,
+        "flaps": 20,
+        "forward_slip": false
+      }
+    },
+    {
+      "turn": 14,
+      "pos_x": -9.999999999999998,
+      "pos_y": 0.0,
+      "alt": 689.7465154335974,
+      "heading": 270.0,
+      "airspeed": 80,
+      "size_nm": 2.043316668828916,
+      "lat": 28.106733,
+      "lon": -80.86837868497595,
+      "frame": "llm_runs/run_20260808_101442/frames/0014.png",
+      "llm_raw_response": "{\"rel_goal_x\": -0.4, \"rel_goal_y\": -0.8, \"airspeed\": 75, \"bank_angle\": 20, \"flaps\": 20, \"forward_slip\": false, \"reasoning\": \"Targeting the open field/small airstrip area to the southwest to avoid the forested areas and ensure a flat touchdown surface.\"}",
+      "llm_decision": {
+        "rel_goal_x": -0.4,
+        "rel_goal_y": -0.8,
+        "airspeed": 75,
+        "bank_angle": 20,
+        "flaps": 20,
+        "forward_slip": false,
+        "reasoning": "Targeting the open field/small airstrip area to the southwest to avoid the forested areas and ensure a flat touchdown surface."
+      },
+      "instruction": {
+        "goal_x": -10.399999999999999,
+        "goal_y": -0.8,
+        "airspeed": 75,
+        "bank_angle": 20,
+        "flaps": 20,
+        "forward_slip": false
+      }
+    },
+    {
+      "turn": 15,
+      "pos_x": -10.399999999999999,
+      "pos_y": -0.8,
+      "alt": 563.7909218924569,
+      "heading": 206.565051177078,
+      "airspeed": 80,
+      "size_nm": 1.6701837017807788,
+      "lat": 28.09342362163133,
+      "lon": -80.87592307237499,
+      "frame": "llm_runs/run_20260808_101442/frames/0015.png",
+      "llm_raw_response": "{\"rel_goal_x\": -0.1, \"rel_goal_y\": -0.1, \"airspeed\": 65, \"bank_angle\": 0, \"flaps\": 30, \"forward_slip\": false, \"reasoning\": \"I am very low (564 ft) and already aligned with a flat, open field area just ahead and slightly left of my current path. Reducing airspeed and deploying full flaps to settle into the landing site.\"}",
+      "llm_decision": {
+        "rel_goal_x": -0.1,
+        "rel_goal_y": -0.1,
+        "airspeed": 65,
+        "bank_angle": 5,
+        "flaps": 30,
+        "forward_slip": false,
+        "reasoning": "I am very low (564 ft) and already aligned with a flat, open field area just ahead and slightly left of my current path. Reducing airspeed and deploying full flaps to settle into the landing site."
+      },
+      "instruction": {
+        "goal_x": -10.499999999999998,
+        "goal_y": -0.9,
+        "airspeed": 65,
+        "bank_angle": 5,
+        "flaps": 30,
+        "forward_slip": false
+      }
+    },
+    {
+      "turn": 16,
+      "pos_x": -10.499999999999998,
+      "pos_y": -0.9,
+      "alt": 478.6025773898275,
+      "heading": 224.9999999999999,
+      "airspeed": 80,
+      "size_nm": 1.4178203183967557,
+      "lat": 28.09175994933525,
+      "lon": -80.87780916922475,
+      "frame": "llm_runs/run_20260808_101442/frames/0016.png",
+      "llm_raw_response": "{\"rel_goal_x\": -0.05, \"rel_goal_y\": -0.2, \"airspeed\": 65, \"bank_angle\": 0, \"flaps\": 30, \"forward_slip\": false, \"reasoning\": \"At 479 ft, I am committed to the landing. I am targeting the open field/road area immediately ahead and slightly left of my current heading to avoid the trees and structures to the east.\"}",
+      "llm_decision": {
+        "rel_goal_x": -0.05,
+        "rel_goal_y": -0.2,
+        "airspeed": 65,
+        "bank_angle": 5,
+        "flaps": 30,
+        "forward_slip": false,
+        "reasoning": "At 479 ft, I am committed to the landing. I am targeting the open field/road area immediately ahead and slightly left of my current heading to avoid the trees and structures to the east."
+      },
+      "instruction": {
+        "goal_x": -10.549999999999999,
+        "goal_y": -1.1,
+        "airspeed": 65,
+        "bank_angle": 5,
+        "flaps": 30,
+        "forward_slip": false
+      }
+    },
+    {
+      "turn": 17,
+      "pos_x": -10.549999999999999,
+      "pos_y": -1.1,
+      "alt": 342.20746076485113,
+      "heading": 194.03624346792665,
+      "airspeed": 80,
+      "size_nm": 1.0137611327240608,
+      "lat": 28.08843260474308,
+      "lon": -80.87875221764963,
+      "frame": "llm_runs/run_20260808_101442/frames/0017.png",
+      "llm_raw_response": "{\"rel_goal_x\": 0.0, \"rel_goal_y\": -0.1, \"airspeed\": 65, \"bank_angle\": 0, \"flaps\": 30, \"forward_slip\": false, \"reasoning\": \"Very low altitude. Aiming for the clear road section directly ahead to perform an emergency landing on the pavement.\"}",
+      "llm_decision": {
+        "rel_goal_x": 0.0,
+        "rel_goal_y": -0.1,
+        "airspeed": 65,
+        "bank_angle": 5,
+        "flaps": 30,
+        "forward_slip": false,
+        "reasoning": "Very low altitude. Aiming for the clear road section directly ahead to perform an emergency landing on the pavement."
+      },
+      "instruction": {
+        "goal_x": -10.549999999999999,
+        "goal_y": -1.2000000000000002,
+        "airspeed": 65,
+        "bank_angle": 5,
+        "flaps": 30,
+        "forward_slip": false
+      }
+    },
+    {
+      "turn": 18,
+      "pos_x": -10.549999999999999,
+      "pos_y": -1.2000000000000002,
+      "alt": 277.3369562037547,
+      "heading": 180.0,
+      "airspeed": 80,
+      "size_nm": 0.8215876598335097,
+      "lat": 28.086768932446997,
+      "lon": -80.87875221764963,
+      "frame": "llm_runs/run_20260808_101442/frames/0018.png",
+      "llm_raw_response": "{\"rel_goal_x\": 0.0, \"rel_goal_y\": -0.1, \"airspeed\": 65, \"bank_angle\": 0, \"flaps\": 30, \"forward_slip\": false, \"reasoning\": \"Maintaining heading for the clear road/field strip directly ahead. Reducing airspeed and deploying full flaps to minimize touchdown speed for the final descent.\"}",
+      "llm_decision": {
+        "rel_goal_x": 0.0,
+        "rel_goal_y": -0.1,
+        "airspeed": 65,
+        "bank_angle": 5,
+        "flaps": 30,
+        "forward_slip": false,
+        "reasoning": "Maintaining heading for the clear road/field strip directly ahead. Reducing airspeed and deploying full flaps to minimize touchdown speed for the final descent."
+      },
+      "instruction": {
+        "goal_x": -10.549999999999999,
+        "goal_y": -1.3000000000000003,
+        "airspeed": 65,
+        "bank_angle": 5,
+        "flaps": 30,
+        "forward_slip": false
+      }
+    },
+    {
+      "turn": 19,
+      "pos_x": -10.549999999999999,
+      "pos_y": -1.3000000000000003,
+      "alt": 269.9737357419247,
+      "heading": 180.0,
+      "airspeed": 80,
+      "size_nm": 0.7997747317950674,
+      "lat": 28.085105260150915,
+      "lon": -80.87875221764963,
+      "frame": "llm_runs/run_20260808_101442/frames/0019.png",
+      "llm_raw_response": "{\"rel_goal_x\": 0.0, \"rel_goal_y\": -0.1, \"airspeed\": 65, \"bank_angle\": 0, \"flaps\": 30, \"forward_slip\": false, \"reasoning\": \"At 270ft, I am on final approach to the clear road/field area directly ahead. Reducing airspeed and deploying full flaps to minimize ground roll and ensure a soft touchdown.\"}",
+      "llm_decision": {
+        "rel_goal_x": 0.0,
+        "rel_goal_y": -0.1,
+        "airspeed": 65,
+        "bank_angle": 5,
+        "flaps": 30,
+        "forward_slip": false,
+        "reasoning": "At 270ft, I am on final approach to the clear road/field area directly ahead. Reducing airspeed and deploying full flaps to minimize ground roll and ensure a soft touchdown."
+      },
+      "instruction": {
+        "goal_x": -10.549999999999999,
+        "goal_y": -1.4000000000000004,
+        "airspeed": 65,
+        "bank_angle": 5,
+        "flaps": 30,
+        "forward_slip": false
+      }
+    }
+  ]
+}

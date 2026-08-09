@@ -29,9 +29,8 @@ def cessna_glide_ratio(weight=2400, density=0.002378, airspeed=67, wind_delta: f
     # Calculate adjusted glide ratio
     glide_ratio = GR_0 * K_weight * K_density * K_speed
     ground_speed = airspeed - wind_speed * math.cos(wind_delta / 180 * math.pi)
-    if wind_speed != 0:
-        glide_ratio *= ground_speed / wind_speed 
-    
+    glide_ratio *= ground_speed / airspeed
+
     return glide_ratio, ground_speed
 
 def density_from_altitude(altitude_ft, temp_f=59):

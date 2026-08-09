@@ -93,6 +93,19 @@ def load_background(path):
     surface = pg.image.load(path).convert_alpha()
     return pg.transform.scale(surface, (WIDTH, HEIGHT))
 
+def render_frame(screen, plane, background, size_nm):
+    """Draw one full frame (background + target + plane + grid) onto screen. Returns the scale
+    function used, in case a caller needs to convert further nm coordinates to screen pixels."""
+    scale = make_scale(plane.pos_x, plane.pos_y, size_nm)
+    screen.blit(background, (0, 0))
+    ox, oy = scale(plane.pos_x, plane.pos_y)
+    if plane.instruction is not None:
+        tx, ty = scale(plane.instruction.goal_x, plane.instruction.goal_y)
+        pg.draw.circle(screen, TARGET_COLOR, (tx, ty), DOT_RADIUS)
+    plane.draw(screen, PLANE_COLOR, ox, oy, heading=plane.heading, radius=DOT_RADIUS, scale=scale)
+    draw_ruler(screen, scale, size_nm, plane.pos_x, plane.pos_y)
+    return scale
+
 # --- Main visualization ---
 def main():
     pg.init()
@@ -120,14 +133,7 @@ def main():
             if event.type == pg.QUIT:
                 running = False
 
-        scale = make_scale(plane.pos_x, plane.pos_y, size_nm)
-        screen.blit(background, (0, 0))
-        ox, oy = scale(plane.pos_x, plane.pos_y)
-        if plane.instruction is not None:
-            tx, ty = scale(plane.instruction.goal_x, plane.instruction.goal_y)
-            pg.draw.circle(screen, TARGET_COLOR, (tx, ty), DOT_RADIUS)
-        plane.draw(screen, PLANE_COLOR, ox, oy, heading=plane.heading, radius=DOT_RADIUS, scale=scale)
-        draw_ruler(screen, scale, size_nm, plane.pos_x, plane.pos_y)
+        render_frame(screen, plane, background, size_nm)
         pg.display.flip()
         clock.tick(30)
 
