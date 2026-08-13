@@ -65,6 +65,7 @@ def draw_ruler(screen, scale, size_nm, center_x, center_y):
 def get_instruction_from_input(plane):
     """Prompts for a goal relative to the plane's current position (nm, east/north positive),
     then converts it to the absolute goal_x/goal_y that Plane/Instruction operate on."""
+    s - ""
     while True:
         try:
             s = input("give instruction (rel_goal_x rel_goal_y airspeed bank_angle flaps forward_slip): ")
@@ -75,8 +76,10 @@ def get_instruction_from_input(plane):
             bank_angle = int(bank_angle)
             flaps = int(flaps)
             forward_slip = forward_slip.lower() == 't'
-            return goal_x, goal_y, airspeed, bank_angle, flaps, forward_slip
+            return goal_x, goal_y, airspeed, bank_angle, flaps, forward_slip, True
         except Exception:
+            if s.strip().lower() in ["q", "quit"]:
+                return None, None, None, None, None, None, False
             print("Invalid input, try again.")
 
 def fetch_photo(smap, plane, photo_index):
@@ -132,8 +135,10 @@ def main():
         clock.tick(30)
 
         # Get new instruction from user
-        if not plane.landing:
-            goal_x, goal_y, airspeed, bank_angle, flaps, forward_slip = get_instruction_from_input(plane)
+        if not plane.landing and running:
+            goal_x, goal_y, airspeed, bank_angle, flaps, forward_slip, running = get_instruction_from_input(plane)
+            if not running:
+                continue
             new_instruction = Instruction(goal_x=goal_x, goal_y=goal_y, airspeed=airspeed, bank_angle=bank_angle, flaps=flaps, forward_slip=forward_slip)
             plane.give_instruction(new_instruction)
             plane.follow_instruction()
