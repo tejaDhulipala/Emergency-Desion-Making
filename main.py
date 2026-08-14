@@ -65,7 +65,7 @@ def draw_ruler(screen, scale, size_nm, center_x, center_y):
 def get_instruction_from_input(plane):
     """Prompts for a goal relative to the plane's current position (nm, east/north positive),
     then converts it to the absolute goal_x/goal_y that Plane/Instruction operate on."""
-    s - ""
+    s = ""
     while True:
         try:
             s = input("give instruction (rel_goal_x rel_goal_y airspeed bank_angle flaps forward_slip): ")
