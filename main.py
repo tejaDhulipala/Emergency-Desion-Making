@@ -5,6 +5,7 @@ import ctypes
 import math
 from plane import Plane, EnvironmentVariables, Instruction
 from map import SatelliteMap, offset_latlon
+from utils import cessna_glide_ratio
 
 if sys.platform == "win32":
     # Prevent Windows from bitmap-scaling the whole window on high-DPI
@@ -24,7 +25,6 @@ MARGIN = 30  # pixels, ruler label spacing only
 # --- Geo / imagery parameters ---
 ORIGIN_LAT, ORIGIN_LON = 28.106733, -80.679769  # 28°06'22.75"N 80°41'15.89"W
 START_X, START_Y = 0, 0  # plane's local (pos_x, pos_y) at ORIGIN_LAT/ORIGIN_LON
-GLIDE_RATIO = 9  # Cessna 172 nominal glide ratio
 FT_PER_NM = 6076.12
 MIN_SIZE_FT = 200  # floor so size_nm never collapses to ~0 near landing
 CUR_PHOTO_DIR = "CurPhoto"
@@ -105,11 +105,22 @@ def get_instruction_from_input(plane):
                 return None, None, None, None, None, None, False
             print("Invalid input, try again.")
 
-def fetch_photo(smap, plane, photo_index):
+def scenario_glide_ratio(plane):
+    """Fixed, worst-case glide ratio for the whole flight: the plane's starting weight/density/
+    airspeed, but with the scenario's wind treated as a direct tailwind (wind_delta=180) instead
+    of whatever it actually is relative to the current heading. Computed once from the plane's
+    initial state and reused for every photo, so no matter which heading (and thus which real
+    wind component) later turns actually fly, they can never glide farther than this bound
+    already assumed -- meaning no frame can ever show terrain outside the very first photo."""
+    ratio, _ = cessna_glide_ratio(plane.weight, plane.density, plane.airspeed, wind_delta=180,
+                                   wind_speed=plane.environment_variables.wind_strength)
+    return ratio
+
+def fetch_photo(smap, plane, photo_index, glide_ratio):
     """Fetch a fresh satellite photo centered on the plane, sized to its glide-reachable radius.
     Pure PIL/requests logic, no pygame dependency, so it's testable without a display."""
     lat, lon = offset_latlon(ORIGIN_LAT, ORIGIN_LON, plane.pos_x - START_X, plane.pos_y - START_Y)
-    size_nm = max(plane.alt * GLIDE_RATIO * 2, MIN_SIZE_FT) / FT_PER_NM
+    size_nm = max(plane.alt * glide_ratio * 2, MIN_SIZE_FT) / FT_PER_NM
     img = smap.get_image(lat, lon, size_nm, out_size=WIDTH)
     path = os.path.join(CUR_PHOTO_DIR, f"{photo_index:04d}.png")
     img.save(path)
@@ -150,7 +161,8 @@ def main():
     print(f"Altitude: {plane.alt}. Weight: {plane.weight}. Heading: {plane.heading}. StartX: {plane.pos_x}. StartY: {plane.pos_y}")
     print(f"Winds {round(env.wind_direction / 10)} @ {env.wind_strength}. Temperature {env.temperature}")
 
-    photo_path, size_nm, _, _ = fetch_photo(smap, plane, photo_index)
+    glide_ratio = scenario_glide_ratio(plane)
+    photo_path, size_nm, _, _ = fetch_photo(smap, plane, photo_index, glide_ratio)
     background = load_background(photo_path)
 
     running = True
@@ -172,7 +184,7 @@ def main():
             plane.give_instruction(new_instruction)
             plane.follow_instruction()
             photo_index += 1
-            photo_path, size_nm, _, _ = fetch_photo(smap, plane, photo_index)
+            photo_path, size_nm, _, _ = fetch_photo(smap, plane, photo_index, glide_ratio)
             background = load_background(photo_path)
 
     pg.quit()
