@@ -1,8 +1,16 @@
 import pygame as pg
 import sys
 import os
+import ctypes
+import math
 from plane import Plane, EnvironmentVariables, Instruction
 from map import SatelliteMap, offset_latlon
+
+if sys.platform == "win32":
+    # Prevent Windows from bitmap-scaling the whole window on high-DPI
+    # displays, which is what makes small text (e.g. the ruler labels)
+    # look blurry.
+    ctypes.windll.user32.SetProcessDPIAware()
 
 # --- Visualization parameters ---
 WIDTH, HEIGHT = 900, 900  # square, matches SatelliteMap's square output
@@ -31,18 +39,30 @@ def make_scale(center_x, center_y, size_nm):
 
 GRID_LINE_COLOR = (255, 255, 255)
 GRID_LABEL_COLOR = (255, 0, 0)
-N_SIDE_TICKS = 8  # ticks above/below (and left/right of) center, so 2*N_SIDE_TICKS+1 total per axis
+N_SIDE_TICKS = 8  # target ticks per side; actual count varies once the step is rounded to a nice value
 CORNER_CLEARANCE = 45  # px; skip a label if it would collide with the other axis's labels in the corner
 
+def _nice_step(raw_step):
+    """Round raw_step up to the nearest 1-2-5-10 value at the same order of
+    magnitude, so gridline spacing is always a clean, consistent increment."""
+    magnitude = 10 ** math.floor(math.log10(raw_step))
+    for mult in (1, 2, 5, 10):
+        candidate = mult * magnitude
+        if candidate >= raw_step:
+            return candidate
+
 def draw_ruler(screen, scale, size_nm, center_x, center_y):
-    font = pg.font.SysFont(None, 16)
-    step = (size_nm / 2) / N_SIDE_TICKS
+    font = pg.font.SysFont(None, 22, bold=True)
+    raw_step = (size_nm / 2) / N_SIDE_TICKS
+    step = _nice_step(raw_step)
+    decimals = max(0, -math.floor(math.log10(step)))
+    n_ticks = math.ceil((size_nm / 2) / step)
     y_label_row = HEIGHT - MARGIN // 2
     x_label_col = MARGIN // 2
 
     ticks = []
     grid_surface = pg.Surface((WIDTH, HEIGHT), pg.SRCALPHA)
-    for k in range(-N_SIDE_TICKS, N_SIDE_TICKS + 1):
+    for k in range(-n_ticks, n_ticks + 1):
         x_nm = center_x + k * step
         sx, _ = scale(x_nm, center_y)
         pg.draw.line(grid_surface, (*GRID_LINE_COLOR, 90), (sx, 0), (sx, HEIGHT), 1)
@@ -55,16 +75,20 @@ def draw_ruler(screen, scale, size_nm, center_x, center_y):
     screen.blit(grid_surface, (0, 0))
 
     for sx, x_nm, sy, y_nm in ticks:
-        if sx > x_label_col + CORNER_CLEARANCE:
-            label = font.render(f"{x_nm - center_x:+.1f}", True, GRID_LABEL_COLOR)
-            screen.blit(label, (sx - label.get_width() // 2, y_label_row))
-        if sy < y_label_row - CORNER_CLEARANCE:
-            label = font.render(f"{y_nm - center_y:+.1f}", True, GRID_LABEL_COLOR)
-            screen.blit(label, (x_label_col, sy - label.get_height() // 2))
+        label_x = font.render(f"{x_nm - center_x:+.{decimals}f}", True, GRID_LABEL_COLOR)
+        lx = sx - label_x.get_width() // 2
+        if lx >= x_label_col + CORNER_CLEARANCE:
+            screen.blit(label_x, (lx, y_label_row))
+
+        label_y = font.render(f"{y_nm - center_y:+.{decimals}f}", True, GRID_LABEL_COLOR)
+        ly = sy - label_y.get_height() // 2
+        if ly <= y_label_row - CORNER_CLEARANCE - label_y.get_height():
+            screen.blit(label_y, (x_label_col, ly))
 
 def get_instruction_from_input(plane):
     """Prompts for a goal relative to the plane's current position (nm, east/north positive),
     then converts it to the absolute goal_x/goal_y that Plane/Instruction operate on."""
+    s = ""
     while True:
         try:
             s = input("give instruction (rel_goal_x rel_goal_y airspeed bank_angle flaps forward_slip): ")
@@ -75,8 +99,10 @@ def get_instruction_from_input(plane):
             bank_angle = int(bank_angle)
             flaps = int(flaps)
             forward_slip = forward_slip.lower() == 't'
-            return goal_x, goal_y, airspeed, bank_angle, flaps, forward_slip
+            return goal_x, goal_y, airspeed, bank_angle, flaps, forward_slip, True
         except Exception:
+            if s.strip().lower() in ["q", "quit"]:
+                return None, None, None, None, None, None, False
             print("Invalid input, try again.")
 
 def fetch_photo(smap, plane, photo_index):
@@ -120,7 +146,7 @@ def main():
     # Initial plane state
     start_heading = 270  # degrees (north)
     env = EnvironmentVariables(wind_strength=0, wind_direction=0, temperature=15)
-    plane = Plane(START_X, START_Y, alt=1000, airspeed=80, weight=2400, heading=start_heading, env_vars=env, inst=None)
+    plane = Plane(START_X, START_Y, alt=10000, airspeed=80, weight=2400, heading=start_heading, env_vars=env, inst=None)
     print(f"Altitude: {plane.alt}. Weight: {plane.weight}. Heading: {plane.heading}. StartX: {plane.pos_x}. StartY: {plane.pos_y}")
     print(f"Winds {round(env.wind_direction / 10)} @ {env.wind_strength}. Temperature {env.temperature}")
 
@@ -138,8 +164,10 @@ def main():
         clock.tick(30)
 
         # Get new instruction from user
-        if not plane.landing:
-            goal_x, goal_y, airspeed, bank_angle, flaps, forward_slip = get_instruction_from_input(plane)
+        if not plane.landing and running:
+            goal_x, goal_y, airspeed, bank_angle, flaps, forward_slip, running = get_instruction_from_input(plane)
+            if not running:
+                continue
             new_instruction = Instruction(goal_x=goal_x, goal_y=goal_y, airspeed=airspeed, bank_angle=bank_angle, flaps=flaps, forward_slip=forward_slip)
             plane.give_instruction(new_instruction)
             plane.follow_instruction()
