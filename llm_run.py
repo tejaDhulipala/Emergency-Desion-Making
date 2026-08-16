@@ -152,8 +152,7 @@ def run(run_name=None, max_turns=MAX_TURNS):
 
     trajectory = []
     turn = 0
-    glide_ratio = main.scenario_glide_ratio(plane)
-    photo_path, size_nm, lat, lon = main.fetch_photo(smap, plane, turn, glide_ratio)
+    photo_path, size_nm, lat, lon = main.fetch_photo(smap, plane, turn)
     background = main.load_background(photo_path)
 
     while turn < max_turns:
@@ -196,7 +195,7 @@ def run(run_name=None, max_turns=MAX_TURNS):
         plane.give_instruction(instruction)
         plane.follow_instruction()
         turn += 1
-        photo_path, size_nm, lat, lon = main.fetch_photo(smap, plane, turn, glide_ratio)
+        photo_path, size_nm, lat, lon = main.fetch_photo(smap, plane, turn)
         background = main.load_background(photo_path)
     else:
         pg.image.save(screen, os.path.join(run_dir, "final.png"))

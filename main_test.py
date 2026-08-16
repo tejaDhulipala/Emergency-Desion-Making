@@ -13,7 +13,6 @@ def run():
     smap = SatelliteMap()
     env = EnvironmentVariables(wind_strength=0, wind_direction=0, temperature=15)
     plane = Plane(main.START_X, main.START_Y, alt=8000, airspeed=80, weight=2400, heading=270, env_vars=env, inst=None)
-    glide_ratio = main.scenario_glide_ratio(plane)
 
     scripted_instructions = [
         Instruction(goal_x=2, goal_y=6.6, airspeed=80, bank_angle=30),
@@ -23,7 +22,7 @@ def run():
     ]
 
     for i, instr in enumerate(scripted_instructions):
-        path, size_nm, lat, lon = main.fetch_photo(smap, plane, i, glide_ratio)
+        path, size_nm, lat, lon = main.fetch_photo(smap, plane, i)
         print(f"turn {i}: pos=({plane.pos_x:.2f},{plane.pos_y:.2f}) alt={plane.alt:.0f}ft "
               f"lat/lon=({lat:.5f},{lon:.5f}) size_nm={size_nm:.3f} -> {path}")
         if plane.landing:
@@ -31,7 +30,7 @@ def run():
         plane.give_instruction(instr)
         plane.follow_instruction()
 
-    path, size_nm, lat, lon = main.fetch_photo(smap, plane, len(scripted_instructions), glide_ratio)
+    path, size_nm, lat, lon = main.fetch_photo(smap, plane, len(scripted_instructions))
     print(f"final: pos=({plane.pos_x:.2f},{plane.pos_y:.2f}) alt={plane.alt:.0f}ft "
           f"lat/lon=({lat:.5f},{lon:.5f}) size_nm={size_nm:.3f} -> {path}")
 
