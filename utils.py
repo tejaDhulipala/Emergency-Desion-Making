@@ -18,15 +18,20 @@ def cessna_glide_ratio(weight=W_MAX, density=RHO_0, airspeed=V_GLIDE, wind_delta
     wind strength (float): wind strength in knots
     
     Returns:
-    float: Adjusted glide ratio
+    float: Adjusted glide ratio, dround speed
     """
+    if weight != W_MAX:
+        raise Warning("Nonstandard weight detected! Physics do not consider the effect of variable weight.")
+
+    if density != RHO_0:
+        raise Warning("Nonstandard density detected! Physics do not consider the effect of variable density.")
     
     # Calculate correction factors
-    K_weight = (W_MAX / weight) ** 0.5
-    K_density = (density / RHO_0) ** 0.25
+    K_weight = 1 # (W_MAX / weight) ** 0.5
+    K_density = 1 # (density / RHO_0) ** 0.25
     K_speed = 1 / (0.5 * (airspeed / V_GLIDE) ** 2 + 0.5 * (V_GLIDE / airspeed) ** 2)
     
-    # Calculate adjusted glide ratio
+    # Calculate adjusted effective glide ratio
     glide_ratio = GR_0 * K_weight * K_density * K_speed
     ground_speed = airspeed - wind_speed * math.cos(wind_delta / 180 * math.pi)
     glide_ratio *= ground_speed / airspeed
