@@ -16,7 +16,6 @@ from plane import Plane, EnvironmentVariables, Instruction
 
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 OPENROUTER_MODEL = "google/gemma-4-31b-it"
-MAX_TURNS = 20
 MAX_PARSE_RETRIES = 3
 
 SYSTEM_PROMPT = """You are the pilot of a Cessna 172 whose engine has failed at altitude. Glide the \
@@ -131,7 +130,12 @@ def get_llm_instruction(api_key, plane, size_nm, turn, image_data_uri):
     raise RuntimeError(f"Could not get a valid instruction after {MAX_PARSE_RETRIES} attempts: {last_error}")
 
 
-def run(run_name=None, max_turns=MAX_TURNS):
+def run(run_name=None, max_turns=20, origin_lat=28.106733, origin_lon=-80.679769,
+        alt=1500, airspeed=80, weight=2400, heading=270, env_vars=None):
+    # origin_lat/origin_lon default: 28°06'22.75"N 80°41'15.89"W
+    if env_vars is None:
+        env_vars = EnvironmentVariables(wind_strength=8, wind_direction=270, temperature=15)
+
     dotenv_values = load_dotenv()
     api_key = os.environ.get("OPENROUTER_API_KEY") or dotenv_values.get("OPENROUTER_API_KEY") or dotenv_values.get("OPENROUTER-KEY")
     if not api_key:
@@ -147,12 +151,11 @@ def run(run_name=None, max_turns=MAX_TURNS):
     screen = pg.display.set_mode((main.WIDTH, main.HEIGHT))
     smap = main.SatelliteMap()
 
-    env = EnvironmentVariables(wind_strength=8, wind_direction=270, temperature=15)
-    plane = Plane(main.START_X, main.START_Y, alt=1500, airspeed=80, weight=2400, heading=270, env_vars=env, inst=None)
+    plane = Plane(main.START_X, main.START_Y, alt=alt, airspeed=airspeed, weight=weight, heading=heading, env_vars=env_vars, inst=None)
 
     trajectory = []
     turn = 0
-    photo_path, size_nm, lat, lon = main.fetch_photo(smap, plane, turn)
+    photo_path, size_nm, lat, lon = main.fetch_photo(smap, plane, turn, origin_lat, origin_lon)
     background = main.load_background(photo_path)
 
     while turn < max_turns:
@@ -195,7 +198,7 @@ def run(run_name=None, max_turns=MAX_TURNS):
         plane.give_instruction(instruction)
         plane.follow_instruction()
         turn += 1
-        photo_path, size_nm, lat, lon = main.fetch_photo(smap, plane, turn)
+        photo_path, size_nm, lat, lon = main.fetch_photo(smap, plane, turn, origin_lat, origin_lon)
         background = main.load_background(photo_path)
     else:
         pg.image.save(screen, os.path.join(run_dir, "final.png"))
@@ -217,4 +220,4 @@ def run(run_name=None, max_turns=MAX_TURNS):
 
 
 if __name__ == "__main__":
-    run()
+    run(max_turns=3)

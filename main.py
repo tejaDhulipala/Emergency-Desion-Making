@@ -1,6 +1,7 @@
 import pygame as pg
 import sys
 import os
+import shutil
 import ctypes
 import math
 from plane import Plane, EnvironmentVariables, Instruction
@@ -23,7 +24,6 @@ MARGIN = 30  # pixels, ruler label spacing only
 
 # --- Geo / imagery parameters ---
 START_X, START_Y = 0, 0  # plane's local (pos_x, pos_y) at the origin lat/lon
-GLIDE_RATIO = 9  # Cessna 172 nominal glide ratio
 FT_PER_NM = 6076.12
 MIN_SIZE_FT = 200  # floor so size_nm never collapses to ~0 near landing
 CUR_PHOTO_DIR = "CurPhoto"
@@ -108,7 +108,7 @@ def fetch_photo(smap, plane, photo_index, origin_lat, origin_lon):
     """Fetch a fresh satellite photo centered on the plane, sized to its glide-reachable radius.
     Pure PIL/requests logic, no pygame dependency, so it's testable without a display."""
     lat, lon = offset_latlon(origin_lat, origin_lon, plane.pos_x - START_X, plane.pos_y - START_Y)
-    size_nm = max(plane.alt * GLIDE_RATIO * 2, MIN_SIZE_FT) / FT_PER_NM
+    size_nm = max(plane.alt * plane.max_glide_ratio * 2, MIN_SIZE_FT) / FT_PER_NM
     img = smap.get_image(lat, lon, size_nm, out_size=WIDTH)
     path = os.path.join(CUR_PHOTO_DIR, f"{photo_index:04d}.png")
     img.save(path)
@@ -143,6 +143,7 @@ def main(origin_lat=28.106733, origin_lon=-80.679769, alt=10000, airspeed=80, we
     pg.display.set_caption("Plane Turn Visualization")
     clock = pg.time.Clock()
 
+    shutil.rmtree(CUR_PHOTO_DIR, ignore_errors=True)
     os.makedirs(CUR_PHOTO_DIR, exist_ok=True)
     smap = SatelliteMap()
     photo_index = 0
@@ -173,7 +174,7 @@ def main(origin_lat=28.106733, origin_lon=-80.679769, alt=10000, airspeed=80, we
             plane.give_instruction(new_instruction)
             plane.follow_instruction()
             photo_index += 1
-            photo_path, size_nm, _, _ = fetch_photo(smap, plane, photo_index)
+            photo_path, size_nm, _, _ = fetch_photo(smap, plane, photo_index, origin_lat, origin_lon)
             background = load_background(photo_path)
 
     pg.quit()

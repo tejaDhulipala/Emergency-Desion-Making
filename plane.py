@@ -38,6 +38,8 @@ class Plane:
         self.weight = weight
         self.glide_ratio, self.ground_speed = cessna_glide_ratio(self.weight, self.density, self.airspeed,
         self.heading - self.environment_variables.wind_direction, self.environment_variables.wind_strength)
+        self.max_glide_ratio, _ = cessna_glide_ratio(weight=self.weight, wind_delta=180,
+            wind_speed=self.environment_variables.wind_strength)
         self.landing = None
 
     def give_instruction(self, instruction: Instruction):

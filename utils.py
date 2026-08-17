@@ -1,13 +1,19 @@
 import math
 
-def cessna_glide_ratio(weight=2400, density=0.002378, airspeed=67, wind_delta: float = 0.0, wind_speed=0):
+# Standard reference conditions
+GR_0 = 9.0                    # Baseline glide ratio
+W_MAX = 2400                    # Max gross weight
+RHO_0 = 0.002378             # Standard density (slug/ft³)
+V_GLIDE = 65                      # Best glide speed (knots)
+
+def cessna_glide_ratio(weight=W_MAX, density=RHO_0, airspeed=V_GLIDE, wind_delta: float = 0.0, wind_speed=0):
     """
     Calculate Cessna 172 glide ratio based on weight, air density, and airspeed.
     
     Parameters:
     weight (float): Aircraft weight in pounds (default: 2400 lbs)
     density (float): Air density in slug/ft³ (default: 0.002378 - sea level standard)
-    airspeed (float): Airspeed in knots (default: 67 knots)
+    airspeed (float): Airspeed in knots (default: 65 knots)
     wind_delta (float): difference between aircraft heading and wind direction
     wind strength (float): wind strength in knots
     
@@ -15,16 +21,10 @@ def cessna_glide_ratio(weight=2400, density=0.002378, airspeed=67, wind_delta: f
     float: Adjusted glide ratio
     """
     
-    # Standard reference conditions
-    GR_0 = 9.0                    # Baseline glide ratio
-    W_0 = 2400                    # Standard weight (lbs)
-    RHO_0 = 0.002378             # Standard density (slug/ft³)
-    V_0 = 67                      # Best glide speed (knots)
-    
     # Calculate correction factors
-    K_weight = (W_0 / weight) ** 0.5
+    K_weight = (W_MAX / weight) ** 0.5
     K_density = (density / RHO_0) ** 0.25
-    K_speed = 1 / (0.5 * (airspeed / V_0) ** 2 + 0.5 * (V_0 / airspeed) ** 2)
+    K_speed = 1 / (0.5 * (airspeed / V_GLIDE) ** 2 + 0.5 * (V_GLIDE / airspeed) ** 2)
     
     # Calculate adjusted glide ratio
     glide_ratio = GR_0 * K_weight * K_density * K_speed
