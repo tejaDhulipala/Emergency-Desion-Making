@@ -2,18 +2,16 @@ import math
 import io
 import requests
 from PIL import Image
+from utils.constants import TILE_SIZE, NM_TO_M, MAX_ZOOM, M_PER_DEG_LAT, WEB_MERCATOR_RES_ZOOM0
 
-TILE_SIZE = 256
-NM_TO_M = 1852.0
-MAX_ZOOM = 19
 TILE_URL = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
 HEADERS = {"User-Agent": "emergency-decision-making-sim/1.0"}
 
 
 def offset_latlon(lat, lon, dx_nm, dy_nm):
     """Offset (lat, lon) by dx_nm east and dy_nm north using a flat-earth approximation."""
-    lat_deg_per_m = 1 / 111320.0
-    lon_deg_per_m = 1 / (111320.0 * math.cos(math.radians(lat)))
+    lat_deg_per_m = 1 / M_PER_DEG_LAT
+    lon_deg_per_m = 1 / (M_PER_DEG_LAT * math.cos(math.radians(lat)))
     dx_m = dx_nm * NM_TO_M
     dy_m = dy_nm * NM_TO_M
     return lat + dy_m * lat_deg_per_m, lon + dx_m * lon_deg_per_m
@@ -26,8 +24,8 @@ class SatelliteMap:
 
     def get_image(self, lat, lon, size_nm, out_size=512):
         zoom = self._pick_zoom(lat, size_nm, out_size)
-        lat_deg_per_m = 1 / 111320.0
-        lon_deg_per_m = 1 / (111320.0 * math.cos(math.radians(lat)))
+        lat_deg_per_m = 1 / M_PER_DEG_LAT
+        lon_deg_per_m = 1 / (M_PER_DEG_LAT * math.cos(math.radians(lat)))
         half_size_m = (size_nm * NM_TO_M) / 2
         lat_north = lat + half_size_m * lat_deg_per_m
         lat_south = lat - half_size_m * lat_deg_per_m
@@ -67,7 +65,7 @@ class SatelliteMap:
         size_m = size_nm * NM_TO_M
         target_res = size_m / out_size  # meters/pixel needed
         for zoom in range(0, MAX_ZOOM + 1):
-            res = 156543.03392 * math.cos(math.radians(lat)) / (2 ** zoom)
+            res = WEB_MERCATOR_RES_ZOOM0 * math.cos(math.radians(lat)) / (2 ** zoom)
             if res <= target_res:
                 return zoom
         return MAX_ZOOM

@@ -6,6 +6,7 @@ import ctypes
 import math
 from plane import Plane, EnvironmentVariables, Instruction
 from map import SatelliteMap, offset_latlon
+from utils.constants import FT_PER_NM
 
 if sys.platform == "win32":
     # Prevent Windows from bitmap-scaling the whole window on high-DPI
@@ -24,7 +25,6 @@ MARGIN = 30  # pixels, ruler label spacing only
 
 # --- Geo / imagery parameters ---
 START_X, START_Y = 0, 0  # plane's local (pos_x, pos_y) at the origin lat/lon
-FT_PER_NM = 6076.12
 MIN_SIZE_FT = 200  # floor so size_nm never collapses to ~0 near landing
 CUR_PHOTO_DIR = "CurPhoto"
 
@@ -132,7 +132,7 @@ def render_frame(screen, plane, background, size_nm):
     return scale
 
 # --- Main visualization ---
-def main(origin_lat=28.106733, origin_lon=-80.679769, alt=10000, airspeed=80, weight=2400,
+def main(origin_lat=28.106733, origin_lon=-80.679769, alt=500, airspeed=80, weight=2400,
          heading=270, env_vars=None):
     # origin_lat/origin_lon default: 28°06'22.75"N 80°41'15.89"W
     if env_vars is None:

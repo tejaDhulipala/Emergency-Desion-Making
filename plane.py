@@ -1,7 +1,20 @@
+import math
 from dataclasses import dataclass
 
 from pygame.math import clamp
-from utils import *
+from utils import cessna_glide_ratio, density_from_altitude, desired_heading, landing_distance
+from utils.constants import (
+    FT_PER_NM,
+    OBSTACLE_CLEARANCE_FT,
+    ENGINE_RPM_DEFAULT,
+    VALID_FLAP_SETTINGS,
+    FORWARD_SLIP_GR_PENALTY,
+    FORWARD_SLIP_GR_MIN,
+    FORWARD_SLIP_GR_MAX,
+    FLAP_GR_PENALTY_10_20,
+    FLAP_GR_PENALTY_30,
+)
+from utils.paths import altitude_loss
 
 @dataclass
 class EnvironmentVariables:
@@ -17,7 +30,7 @@ class Instruction:
     bank_angle: int
     flaps: int = 0
     forward_slip: bool = False
-    assert flaps in [0, 10, 20, 30]
+    assert flaps in VALID_FLAP_SETTINGS
 
 
 
@@ -28,7 +41,7 @@ class Plane:
         self.alt = alt # ft
         self.airspeed = airspeed # kias
         self.heading = heading # degrees
-        self.engine_rpm = 2300 # rpm
+        self.engine_rpm = ENGINE_RPM_DEFAULT # rpm
         self.aircraft_condition = "intact"
         self.environment_variables = env_vars
         self.time_simulated = 0
@@ -51,49 +64,47 @@ class Plane:
         self.glide_ratio, self.ground_speed = cessna_glide_ratio(self.weight, self.density, self.airspeed,
         self.heading - self.environment_variables.wind_direction, self.environment_variables.wind_strength)
         if self.instruction.forward_slip:
-            self.glide_ratio -= 4
-            self.glide_ratio = clamp(self.glide_ratio, 4, 6)
+            self.glide_ratio -= FORWARD_SLIP_GR_PENALTY
+            self.glide_ratio = clamp(self.glide_ratio, FORWARD_SLIP_GR_MIN, FORWARD_SLIP_GR_MAX)
         elif self.instruction.flaps:
             if self.instruction.flaps in [10, 20]:
-                self.glide_ratio -= 1
-            else: 
-                self.glide_ratio -= 2
+                self.glide_ratio -= FLAP_GR_PENALTY_10_20
+            else:
+                self.glide_ratio -= FLAP_GR_PENALTY_30
         print(f"Glide Ratio: {self.glide_ratio}")
 
 
     def follow_instruction(self):
-        # Follow instruction by first doing a turn, then going along a heading
-        # The first step is doing a turn at the current airspeec to the goal heading
-        # Calculate turn radius in feet, then convert to nautical miles
+        # Follow instruction by turning onto the goal's bearing and gliding to it,
+        # using altitude_loss's turn+glide-path model (see utils/paths.py) to estimate
+        # the altitude cost of the whole maneuver up front.
         if self.instruction_completed:
             return
-        turn_radius_ft = self.ground_speed ** 2 / (11.26 * math.tan(math.radians(self.instruction.bank_angle)))
-        turn_radius = turn_radius_ft / 6076  # nautical miles
-        desired_heading_value = desired_heading(self.pos_x, self.pos_y, self.instruction.goal_x, self.instruction.goal_y)
-        # Determine shortest turn direction
-        ground_speed_nms = self.ground_speed / 3600  # knots to nm/sec
-        omega_rad = ground_speed_nms / turn_radius / math.pi * 180  # degrees/sec
-        dt = abs(desired_heading_value - self.heading) / omega_rad
-        self.alt -= 300 * dt / 60
-        print(f"Altitude loss from turn {300 * dt / 60}")
-        self.heading = desired_heading_value
-        self.update_glide_ratio()
-        # Go straight in the desired direction
-        distance = ((self.pos_x - self.instruction.goal_x) ** 2 + (self.pos_y - self.instruction.goal_y) ** 2) ** 0.5
-        glide_distance = self.glide_ratio * (self.alt - 50) / 6071
+        self.airspeed = self.instruction.airspeed
+        self.update_glide_ratio()  # refresh ground_speed (and glide_ratio) for the new airspeed before estimating loss
+        target_pos = (self.instruction.goal_x, self.instruction.goal_y)
+        target_heading = desired_heading(self.pos_x, self.pos_y, target_pos[0], target_pos[1])
+        loss = altitude_loss(self, target_pos)
+        available = self.alt - OBSTACLE_CLEARANCE_FT
         self.instruction_completed = True
-        print(f"glide distance {glide_distance} distance {distance}")
-        if glide_distance <= distance:
-            self.alt -= glide_distance * 6071 / self.glide_ratio
+        print(f"Estimated altitude loss to target: {loss}")
+        if loss <= available:
+            self.alt -= loss
+            self.pos_x, self.pos_y = target_pos
+            self.heading = target_heading
+            self.update_glide_ratio()
+        else:
+            # Not enough altitude to reach the target: turn onto the bearing and glide
+            # as far as the remaining altitude allows, then land there.
+            self.heading = target_heading
+            self.update_glide_ratio()
+            glide_distance = self.glide_ratio * available / FT_PER_NM
             angle_rad = math.radians(self.heading)
             self.pos_x += glide_distance * math.sin(angle_rad)
             self.pos_y += glide_distance * math.cos(angle_rad)
+            self.alt = OBSTACLE_CLEARANCE_FT
             self.aircraft_condition = "landed"
             self.initiate_landing()
-        else:
-            self.alt -= distance * 6071 / self.glide_ratio
-            self.pos_x = self.instruction.goal_x
-            self.pos_y = self.instruction.goal_y
         print(f"({self.pos_x}nm, {self.pos_y}nm, {self.alt}ft, {self.heading} degreees)")
     
     def initiate_landing(self):
