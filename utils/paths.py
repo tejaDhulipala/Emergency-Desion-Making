@@ -93,6 +93,17 @@ def altitude_loss(plane, target_pos, alpha_deg=CONE_ALPHA_DEG, bank_fraction=BAN
     makes a final small-alpha corrected glide to the target -- see the design notes for
     the angle-chase that makes the alpha_deg overshoot exact rather than approximate.
 
+    That alpha-overshoot construction assumes the intersection point falls between the
+    current position and the target; for a target close enough (relative to the turn
+    radius) that doesn't hold, and two fallbacks apply instead:
+      - If the target lies inside the turn circle, no coordinated turn at this bank angle
+        can ever roll out pointed at it -- raises ValueError.
+      - Otherwise, falls back to turning only until the heading matches the direct bearing
+        (no alpha overshoot), then gliding straight from wherever that leaves the plane to
+        the target, with an assumed bank proportional to *whatever* residual heading error
+        remains at that point -- uncapped by alpha_deg, unlike the cone case, since this
+        residual is a byproduct of the actual turn geometry rather than a design parameter.
+
     `plane` just needs pos_x/pos_y/heading/ground_speed/weight/density/airspeed,
     environment_variables.wind_direction/wind_strength, and instruction.bank_angle --
     duck-typed, no import of the Plane class needed here.
@@ -118,20 +129,49 @@ def altitude_loss(plane, target_pos, alpha_deg=CONE_ALPHA_DEG, bank_fraction=BAN
         return direct_distance * FT_PER_NM / glide_ratio
 
     turn_sign = 1 if delta >= 0 else -1
-    theta_exit = abs(delta) + alpha_deg
     radius_nm = turn_radius_ft(plane.ground_speed, plane.instruction.bank_angle) / FT_PER_NM
+    center = turn_center(cur_pos, plane.heading, radius_nm, turn_sign)
 
     def turn_glide_ratio_fn(heading_deg):
         return glide_ratio_at(heading_deg, plane.instruction.bank_angle)
 
-    loss_turn = integrate_turn_altitude_loss(turn_glide_ratio_fn, plane.heading, turn_sign,
-                                              radius_nm, theta_exit, n_integration_steps)
+    if math.dist(target_pos, center) < radius_nm:
+        raise ValueError(
+            "target is inside the turn circle: no coordinated turn at this bank angle "
+            "can roll out pointed at it"
+        )
 
-    center = turn_center(cur_pos, plane.heading, radius_nm, turn_sign)
+    theta_exit = abs(delta) + alpha_deg
     exit_pos = position_on_circle(center, cur_pos, theta_exit, turn_sign)
     h_exit = heading_after_turn(plane.heading, theta_exit, turn_sign)
-
     intersection = ray_line_intersection(exit_pos, h_exit, cur_pos, b0)
+
+    # Project the intersection onto the cur->target line; for close/tight-angle targets
+    # the alpha-overshoot construction can place it past the target, which would mean
+    # flying backward to reach it -- fall back to the residual-correction construction instead.
+    bearing_unit = (math.sin(math.radians(b0)), math.cos(math.radians(b0)))
+    t_intersection = ((intersection[0] - cur_pos[0]) * bearing_unit[0] +
+                       (intersection[1] - cur_pos[1]) * bearing_unit[1])
+
+    if not (0 <= t_intersection <= direct_distance):
+        theta_exit_fb = abs(delta)
+        exit_pos_fb = position_on_circle(center, cur_pos, theta_exit_fb, turn_sign)
+        h_exit_fb = heading_after_turn(plane.heading, theta_exit_fb, turn_sign)  # == b0
+
+        loss_turn_fb = integrate_turn_altitude_loss(turn_glide_ratio_fn, plane.heading, turn_sign,
+                                                      radius_nm, theta_exit_fb, n_integration_steps)
+
+        d_final = math.dist(exit_pos_fb, target_pos)
+        b1 = desired_heading(exit_pos_fb[0], exit_pos_fb[1], target_pos[0], target_pos[1])
+        residual = signed_heading_diff(h_exit_fb, b1)
+        assumed_bank_fb = bank_fraction * abs(residual)
+        glide_ratio_fb, _ = glide_ratio_at(b1, assumed_bank_fb)
+        loss_final = d_final * FT_PER_NM / glide_ratio_fb
+
+        return loss_turn_fb + loss_final
+
+    loss_turn = integrate_turn_altitude_loss(turn_glide_ratio_fn, plane.heading, turn_sign,
+                                              radius_nm, theta_exit, n_integration_steps)
 
     d2 = math.dist(exit_pos, intersection)
     glide_ratio2, _ = glide_ratio_at(h_exit, 0.0)
@@ -311,9 +351,12 @@ if __name__ == "__main__":
     def test_vibes_check_regression():
         """Snapshot of the vibes_check() cases (plane facing west, heading=270) -- catches
         accidental shifts in altitude_loss's output. Tolerance is loose (200ft) since this
-        is a regression guard, not a precision check; a couple of these are deliberately
-        expected to change value (not just drift within tolerance) when the overshoot/
-        inside-turn-circle fallback cases are implemented -- see comments below.
+        is a regression guard, not a precision check. Three cases below were updated (not
+        just left within tolerance) after implementing the overshoot/inside-turn-circle
+        fallbacks: (-0.2,-0.2) and both (1,0) cases at bank=20 were confirmed overshoot
+        cases (turn-radius-vs-distance too tight for the alpha-overshoot construction),
+        so their loss dropped once the backtracking path was replaced by the
+        residual-correction fallback -- see altitude_loss's docstring.
         """
         TOLERANCE_FT = 200
         cases = [
@@ -323,7 +366,7 @@ if __name__ == "__main__":
             (-10, 0, 30, 0, 0, 6751.24),
             (-1, 0.1, 20, 0, 0, 679.34),
             (-1, -0.1, 20, 0, 0, 679.34),
-            (-0.2, -0.2, 20, 0, 0, 271.37),
+            (-0.2, -0.2, 20, 0, 0, 211.88),   # overshoot fallback (was 271.37)
             (-1, -1, 20, 0, 0, 981.95),
             (-1, 0.1, 45, 0, 0, 679.34),
             (-0.2, -0.2, 45, 0, 0, 214.73),
@@ -332,9 +375,9 @@ if __name__ == "__main__":
             (-0.2, -0.2, 60, 0, 0, 220.10),
             (-1, -1, 60, 0, 0, 990.51),
             (1, -1, 20, 0, 0, 1188.90),
-            (1, 0, 20, 0, 0, 1474.94),        # overshoot case -- expected to drop after the fallback fix
+            (1, 0, 20, 0, 0, 1104.08),         # overshoot fallback (was 1474.94)
             (1, 0, 20, 270, 15, 799.86),
-            (1, 0, 20, 90, 15, 3185.27),       # overshoot case -- expected to drop after the fallback fix
+            (1, 0, 20, 90, 15, 1576.44),        # overshoot fallback (was 3185.27)
         ]
         all_passed = True
         for x, y, bank, wind_dir, wind_str, expected in cases:
@@ -361,21 +404,44 @@ if __name__ == "__main__":
             passed = True
         print(f"altitude_loss_raises_when_target_inside_turn_circle: {passed}")
 
-    def test_altitude_loss_straight_fallback_matches_manual_calc():
+    def test_altitude_loss_residual_fallback_matches_manual_calc():
         # (1, 0) at bank=20, no wind is a confirmed overshoot case (intersection point
-        # falls past the target), so this should hit the straight-line fallback.
+        # falls past the target), so this should hit the residual-correction fallback:
+        # turn only until heading == bearing (no alpha overshoot), then glide straight
+        # from wherever that leaves the plane, banked by a fraction of whatever residual
+        # heading error remains there (not capped at alpha_deg).
         plane = _make_plane_facing_west(wind_direction=0, wind_strength=0, bank_angle=20)
         target = (1, 0)
         loss = altitude_loss(plane, target)
-        b0 = desired_heading(plane.pos_x, plane.pos_y, target[0], target[1])
+
+        cur_pos = (plane.pos_x, plane.pos_y)
+        b0 = desired_heading(cur_pos[0], cur_pos[1], target[0], target[1])
         delta = signed_heading_diff(plane.heading, b0)
-        assumed_bank = BANK_ANGLE_FRACTION * abs(delta)
-        wind_delta = b0 - plane.environment_variables.wind_direction
+        turn_sign = 1 if delta >= 0 else -1
+        radius_nm = turn_radius_ft(plane.ground_speed, plane.instruction.bank_angle) / FT_PER_NM
+        center = turn_center(cur_pos, plane.heading, radius_nm, turn_sign)
+
+        def turn_glide_ratio_fn(heading_deg):
+            wind_delta = heading_deg - plane.environment_variables.wind_direction
+            return cessna_glide_ratio(plane.weight, plane.density, plane.airspeed, wind_delta,
+                                       plane.environment_variables.wind_strength,
+                                       bank_angle=plane.instruction.bank_angle)
+
+        theta_exit_fb = abs(delta)
+        loss_turn_fb = integrate_turn_altitude_loss(turn_glide_ratio_fn, plane.heading, turn_sign,
+                                                      radius_nm, theta_exit_fb, TURN_INTEGRATION_STEPS)
+        exit_pos_fb = position_on_circle(center, cur_pos, theta_exit_fb, turn_sign)
+        h_exit_fb = heading_after_turn(plane.heading, theta_exit_fb, turn_sign)
+        b1 = desired_heading(exit_pos_fb[0], exit_pos_fb[1], target[0], target[1])
+        residual = signed_heading_diff(h_exit_fb, b1)
+        assumed_bank = BANK_ANGLE_FRACTION * abs(residual)
+        wind_delta = b1 - plane.environment_variables.wind_direction
         glide_ratio, _ = cessna_glide_ratio(plane.weight, plane.density, plane.airspeed, wind_delta,
                                              plane.environment_variables.wind_strength, bank_angle=assumed_bank)
-        expected = math.dist((plane.pos_x, plane.pos_y), target) * FT_PER_NM / glide_ratio
+        loss_final = math.dist(exit_pos_fb, target) * FT_PER_NM / glide_ratio
+        expected = loss_turn_fb + loss_final
         passed = abs(loss - expected) < 1e-6
-        print(f"altitude_loss_straight_fallback_matches_manual_calc: {passed}")
+        print(f"altitude_loss_residual_fallback_matches_manual_calc: {passed}")
 
     test_position_on_circle_zero_sweep_is_start()
     test_position_on_circle_stays_on_radius()
@@ -389,5 +455,5 @@ if __name__ == "__main__":
     test_altitude_loss_does_not_mutate_plane()
     test_vibes_check_regression()
     test_altitude_loss_raises_when_target_inside_turn_circle()
-    test_altitude_loss_straight_fallback_matches_manual_calc()
+    test_altitude_loss_residual_fallback_matches_manual_calc()
     vibes_check()
