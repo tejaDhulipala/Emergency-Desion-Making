@@ -46,6 +46,12 @@ def cessna_glide_ratio(weight=W_MAX, density=RHO_0, airspeed=V_GLIDE, wind_delta
 
     # Calculate adjusted effective glide ratio
     glide_ratio = GR_0 * K_weight * K_density * K_speed * K_bank
+    # TODO: `airspeed` is documented as KIAS, but is used here directly as true/ground
+    # airspeed with no density-based IAS->TAS conversion. glide_ratio itself is fine as-is
+    # (best-glide L/D is density-independent at a fixed IAS), but the returned ground_speed
+    # is used elsewhere (utils/paths.py's turn_radius_ft) as an absolute speed, where TAS
+    # actually matters -- turn radius is underestimated at altitude as a result. Tracked as
+    # a known limitation (small at this app's altitudes) rather than fixed now.
     ground_speed = airspeed - wind_speed * math.cos(wind_delta / 180 * math.pi)
     glide_ratio *= ground_speed / airspeed
 

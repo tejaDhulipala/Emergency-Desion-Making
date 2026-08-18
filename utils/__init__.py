@@ -9,3 +9,4 @@ from .constants import (
 )
 from .glide_ratio_and_density import cessna_glide_ratio, density_from_altitude
 from .landing import landing_distance
+from .paths import compass_direction

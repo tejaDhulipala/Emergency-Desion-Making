@@ -20,21 +20,18 @@ BAROMETRIC_EXPONENT = 4.256       # standard-atmosphere density exponent
 # --- Cessna 172 performance ---
 GR_0 = 9.0                        # baseline best-glide ratio
 W_MAX = 2400                      # max gross weight (lbs)
-V_GLIDE = 65                      # best glide speed (KIAS)
+V_GLIDE = 65                      # best glide speed @ max gross weight (KIAS)
 ENGINE_RPM_DEFAULT = 2300         # default cruise RPM
 VALID_FLAP_SETTINGS = [0, 10, 20, 30]
 MAX_FLAPS = 30
 
 G_NM_HR_2 = 68626.675878   # Small G in NM/HR^2
-TURN_DESCENT_RATE_FPM = 300       # assumed altitude loss rate while turning, glide config (ft/min)
 OBSTACLE_CLEARANCE_FT = 50        # height of obstacle landing distances are measured over
+MIN_BANK_ANGLE_DEG = 5            # shallowest commandable turn bank (below this, turn radius blows up)
+MAX_BANK_ANGLE_DEG = 60           # steepest commandable turn bank
 
-# Forward slip / flap effect on glide ratio
-FORWARD_SLIP_GR_PENALTY = 4
-FORWARD_SLIP_GR_MIN = 4
-FORWARD_SLIP_GR_MAX = 6
-FLAP_GR_PENALTY_10_20 = 1
-FLAP_GR_PENALTY_30 = 2
+# Flap effect on glide ratio
+FLAP_GR_PENALTY_PER_10_DEG = 1     # glide ratio lost per 10 degrees of flaps
 
 # --- Cessna 172 landing performance (distance over a 50ft obstacle, by temperature) ---
 LANDING_DIST_50FT_BY_TEMP_C = {

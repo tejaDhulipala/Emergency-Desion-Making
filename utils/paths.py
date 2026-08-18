@@ -1,6 +1,7 @@
 import math
+import warnings
 
-from .constants import G_NM_HR_2, FT_PER_NM
+from .constants import G_NM_HR_2, FT_PER_NM, MIN_BANK_ANGLE_DEG, MAX_BANK_ANGLE_DEG
 from .basic_math import desired_heading, signed_heading_diff
 from .glide_ratio_and_density import cessna_glide_ratio
 
@@ -16,7 +17,7 @@ def turn_radius_ft(ground_speed_kt, bank_angle_deg):
     return ground_speed_kt ** 2 / (G_NM_HR_2 * math.tan(math.radians(bank_angle_deg))) * FT_PER_NM
 
 
-def _compass_direction(heading_deg):
+def compass_direction(heading_deg):
     """Unit vector (dx, dy) for a compass heading (0=north/+y, 90=east/+x)."""
     rad = math.radians(heading_deg)
     return math.sin(rad), math.cos(rad)
@@ -33,7 +34,7 @@ def _compass_rotate(vector, angle_deg):
 def turn_center(pos, heading_deg, radius_nm, turn_sign):
     """Center of the turn circle: perpendicular to heading, radius_nm away,
     on the right (turn_sign=+1) or left (turn_sign=-1) side."""
-    dx, dy = _compass_direction(heading_deg + 90 * turn_sign)
+    dx, dy = compass_direction(heading_deg + 90 * turn_sign)
     return pos[0] + radius_nm * dx, pos[1] + radius_nm * dy
 
 
@@ -53,8 +54,8 @@ def ray_line_intersection(point, heading_deg, line_point, line_heading_deg):
     """Intersection of the ray from `point` (direction heading_deg) with the infinite
     line through `line_point` (direction line_heading_deg). Returns (x, y), or raises
     ValueError if the two directions are parallel."""
-    d1x, d1y = _compass_direction(heading_deg)
-    d2x, d2y = _compass_direction(line_heading_deg)
+    d1x, d1y = compass_direction(heading_deg)
+    d2x, d2y = compass_direction(line_heading_deg)
     det = d2x * d1y - d1x * d2y
     if abs(det) < 1e-12:
         raise ValueError("heading_deg and line_heading_deg are parallel; no unique intersection")
@@ -81,8 +82,8 @@ def integrate_turn_altitude_loss(glide_ratio_fn, start_heading_deg, turn_sign, r
     return loss
 
 
-def altitude_loss(plane, target_pos, alpha_deg=CONE_ALPHA_DEG, bank_fraction=BANK_ANGLE_FRACTION,
-                   n_integration_steps=TURN_INTEGRATION_STEPS):
+def altitude_loss(plane, target_pos, flaps=0, alpha_deg=CONE_ALPHA_DEG,
+                   bank_fraction=BANK_ANGLE_FRACTION, n_integration_steps=TURN_INTEGRATION_STEPS):
     """Estimate altitude loss (ft) for `plane` to glide from its current position to
     target_pos = (x, y) in nm, assuming it turns onto the target's bearing.
 
@@ -104,12 +105,28 @@ def altitude_loss(plane, target_pos, alpha_deg=CONE_ALPHA_DEG, bank_fraction=BAN
         remains at that point -- uncapped by alpha_deg, unlike the cone case, since this
         residual is a byproduct of the actual turn geometry rather than a design parameter.
 
+    flaps are not yet modeled here (they affect Plane.update_glide_ratio's glide ratio
+    but this function doesn't apply that penalty) -- warns if set, since the estimate
+    will be optimistic until that penalty is added here too.
+
     `plane` just needs pos_x/pos_y/heading/ground_speed/weight/density/airspeed,
     environment_variables.wind_direction/wind_strength, and instruction.bank_angle --
-    duck-typed, no import of the Plane class needed here.
+    duck-typed, no import of the Plane class needed here. instruction.bank_angle is
+    validated here (the root entry point for that value from outside code) rather than
+    in the utility functions it's passed on to.
 
     Pure function: does not mutate `plane`.
     """
+    if flaps:
+        warnings.warn("altitude_loss does not yet account for flaps' glide-ratio penalty; "
+                       "estimate will be optimistic")
+
+    if not (MIN_BANK_ANGLE_DEG <= plane.instruction.bank_angle <= MAX_BANK_ANGLE_DEG):
+        raise ValueError(
+            f"instruction.bank_angle ({plane.instruction.bank_angle}) must be between "
+            f"{MIN_BANK_ANGLE_DEG} and {MAX_BANK_ANGLE_DEG} degrees"
+        )
+
     cur_pos = (plane.pos_x, plane.pos_y)
     b0 = desired_heading(cur_pos[0], cur_pos[1], target_pos[0], target_pos[1])
     delta = signed_heading_diff(plane.heading, b0)
@@ -149,7 +166,7 @@ def altitude_loss(plane, target_pos, alpha_deg=CONE_ALPHA_DEG, bank_fraction=BAN
     # Project the intersection onto the cur->target line; for close/tight-angle targets
     # the alpha-overshoot construction can place it past the target, which would mean
     # flying backward to reach it -- fall back to the residual-correction construction instead.
-    bearing_unit = (math.sin(math.radians(b0)), math.cos(math.radians(b0)))
+    bearing_unit = compass_direction(b0)
     t_intersection = ((intersection[0] - cur_pos[0]) * bearing_unit[0] +
                        (intersection[1] - cur_pos[1]) * bearing_unit[1])
 

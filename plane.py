@@ -1,18 +1,13 @@
 import math
 from dataclasses import dataclass
 
-from pygame.math import clamp
-from utils import cessna_glide_ratio, density_from_altitude, desired_heading, landing_distance
+from utils import cessna_glide_ratio, density_from_altitude, desired_heading, landing_distance, compass_direction
 from utils.constants import (
     FT_PER_NM,
     OBSTACLE_CLEARANCE_FT,
     ENGINE_RPM_DEFAULT,
     VALID_FLAP_SETTINGS,
-    FORWARD_SLIP_GR_PENALTY,
-    FORWARD_SLIP_GR_MIN,
-    FORWARD_SLIP_GR_MAX,
-    FLAP_GR_PENALTY_10_20,
-    FLAP_GR_PENALTY_30,
+    FLAP_GR_PENALTY_PER_10_DEG,
 )
 from utils.paths import altitude_loss
 
@@ -29,7 +24,6 @@ class Instruction:
     airspeed: int
     bank_angle: int
     flaps: int = 0
-    forward_slip: bool = False
     assert flaps in VALID_FLAP_SETTINGS
 
 
@@ -63,14 +57,8 @@ class Plane:
         self.density = density_from_altitude(self.alt, self.environment_variables.temperature)
         self.glide_ratio, self.ground_speed = cessna_glide_ratio(self.weight, self.density, self.airspeed,
         self.heading - self.environment_variables.wind_direction, self.environment_variables.wind_strength)
-        if self.instruction.forward_slip:
-            self.glide_ratio -= FORWARD_SLIP_GR_PENALTY
-            self.glide_ratio = clamp(self.glide_ratio, FORWARD_SLIP_GR_MIN, FORWARD_SLIP_GR_MAX)
-        elif self.instruction.flaps:
-            if self.instruction.flaps in [10, 20]:
-                self.glide_ratio -= FLAP_GR_PENALTY_10_20
-            else:
-                self.glide_ratio -= FLAP_GR_PENALTY_30
+        if self.instruction.flaps:
+            self.glide_ratio -= (self.instruction.flaps / 10) * FLAP_GR_PENALTY_PER_10_DEG
         print(f"Glide Ratio: {self.glide_ratio}")
 
 
@@ -84,7 +72,7 @@ class Plane:
         self.update_glide_ratio()  # refresh ground_speed (and glide_ratio) for the new airspeed before estimating loss
         target_pos = (self.instruction.goal_x, self.instruction.goal_y)
         target_heading = desired_heading(self.pos_x, self.pos_y, target_pos[0], target_pos[1])
-        loss = altitude_loss(self, target_pos)
+        loss = altitude_loss(self, target_pos, flaps=self.instruction.flaps)
         available = self.alt - OBSTACLE_CLEARANCE_FT
         self.instruction_completed = True
         print(f"Estimated altitude loss to target: {loss}")
@@ -99,24 +87,24 @@ class Plane:
             self.heading = target_heading
             self.update_glide_ratio()
             glide_distance = self.glide_ratio * available / FT_PER_NM
-            angle_rad = math.radians(self.heading)
-            self.pos_x += glide_distance * math.sin(angle_rad)
-            self.pos_y += glide_distance * math.cos(angle_rad)
+            dx, dy = compass_direction(self.heading)
+            self.pos_x += glide_distance * dx
+            self.pos_y += glide_distance * dy
             self.alt = OBSTACLE_CLEARANCE_FT
             self.aircraft_condition = "landed"
             self.initiate_landing()
         print(f"({self.pos_x}nm, {self.pos_y}nm, {self.alt}ft, {self.heading} degreees)")
     
     def initiate_landing(self):
-        headwind = self.environment_variables.wind_strength * math.cos((self.environment_variables.wind_strength - self.heading) / 180 * math.pi)
+        headwind = self.environment_variables.wind_strength * math.cos((self.environment_variables.wind_direction - self.heading) / 180 * math.pi)
         landing_dist = landing_distance(self.environment_variables.temperature, headwind, self.instruction.flaps)
         print(f"Landing distance: {landing_dist}")
         x_start = self.pos_x
         y_start = self.pos_y
         # Calculate end position after traveling landing_dist nm at current heading
-        angle_rad = math.radians(self.heading)
-        x_end = x_start + landing_dist * math.sin(angle_rad)
-        y_end = y_start + landing_dist * math.cos(angle_rad)
+        dx, dy = compass_direction(self.heading)
+        x_end = x_start + landing_dist * dx
+        y_end = y_start + landing_dist * dy
         self.landing = x_start, y_start, x_end, y_end
 
     def draw(self, surface, color, sx, sy, heading=None, radius=8, scale=None):

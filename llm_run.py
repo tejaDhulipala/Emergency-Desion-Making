@@ -13,6 +13,7 @@ import requests
 
 import main
 from plane import Plane, EnvironmentVariables, Instruction
+from utils.constants import MIN_BANK_ANGLE_DEG, MAX_BANK_ANGLE_DEG
 
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 OPENROUTER_MODEL = "google/gemma-4-31b-it"
@@ -23,16 +24,23 @@ aircraft to the safest possible landing using the satellite image and flight dat
 
 The image is centered on the plane (red dot with a red arrow showing its heading). Red gridlines \
 are labeled with distance in nautical miles relative to the plane's CURRENT position: positive x \
-is east, negative x is west, positive y is north, negative y is south. Prefer open, flat terrain \
-(fields, roads, open ground) over water, forest, or buildings for the final approach.
+is east, negative x is west, positive y is north, negative y is south.
+
+// Include something about how the image is based on the glide ratio (so no exploring)
+// Manage airspeed, altitude and configuration to land as safely as possible
+// You will be evaluated by the landing path once you crash land and by considering what you impact
+// on your landing path and the survivaility of that surface
+// Explain bank angle better (also use f-string): for turns that are
+// more than alpha (use f string here) degrees, the plane will turn at
+// bank angle. 
+// Tell it that glide ratio goes -1 per ten degrees of flaps
 
 Respond with ONLY a single JSON object (no markdown fences, no other text) with exactly these keys:
 {"rel_goal_x": <float, nm east(+)/west(-) of current position>,
  "rel_goal_y": <float, nm north(+)/south(-) of current position>,
- "airspeed": <int, knots, typically 60-90>,
- "bank_angle": <int, degrees, typically 15-45>,
+ "airspeed": <int, knots>,
+ "bank_angle": <int, degrees>,
  "flaps": <int, one of 0, 10, 20, 30>,
- "forward_slip": <bool, true to shed extra altitude fast>,
  "reasoning": <short string explaining the choice>}
 """
 
@@ -100,7 +108,7 @@ def parse_instruction_json(text):
         if text.lower().startswith("json"):
             text = text[4:]
     data = json.loads(text)
-    for key in ["rel_goal_x", "rel_goal_y", "airspeed", "bank_angle", "flaps", "forward_slip"]:
+    for key in ["rel_goal_x", "rel_goal_y", "airspeed", "bank_angle", "flaps"]:
         if key not in data:
             raise ValueError(f"missing key: {key}")
     return data
@@ -111,7 +119,7 @@ def sanitize_decision(decision):
     causes a division by zero in the turn-radius formula, airspeed=0 similarly breaks the
     glide-ratio formula, and flaps must be exactly one of Instruction's allowed values."""
     decision = dict(decision)
-    decision["bank_angle"] = max(5, min(60, int(decision["bank_angle"])))
+    decision["bank_angle"] = max(MIN_BANK_ANGLE_DEG, min(MAX_BANK_ANGLE_DEG, int(decision["bank_angle"])))
     decision["airspeed"] = max(40, min(120, int(decision["airspeed"])))
     decision["flaps"] = min([0, 10, 20, 30], key=lambda f: abs(f - int(decision["flaps"])))
     return decision
@@ -179,7 +187,7 @@ def run(run_name=None, max_turns=20, origin_lat=28.106733, origin_lon=-80.679769
         instruction = Instruction(
             goal_x=goal_x, goal_y=goal_y,
             airspeed=int(decision["airspeed"]), bank_angle=int(decision["bank_angle"]),
-            flaps=int(decision["flaps"]), forward_slip=bool(decision["forward_slip"]),
+            flaps=int(decision["flaps"]),
         )
 
         trajectory.append({
@@ -191,7 +199,6 @@ def run(run_name=None, max_turns=20, origin_lat=28.106733, origin_lon=-80.679769
             "instruction": {
                 "goal_x": goal_x, "goal_y": goal_y, "airspeed": instruction.airspeed,
                 "bank_angle": instruction.bank_angle, "flaps": instruction.flaps,
-                "forward_slip": instruction.forward_slip,
             },
         })
 

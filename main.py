@@ -90,18 +90,17 @@ def get_instruction_from_input(plane):
     s = ""
     while True:
         try:
-            s = input("give instruction (rel_goal_x rel_goal_y airspeed bank_angle flaps forward_slip): ")
-            rel_goal_x, rel_goal_y, airspeed, bank_angle, flaps, forward_slip = s.split()
+            s = input("give instruction (rel_goal_x rel_goal_y airspeed bank_angle flaps): ")
+            rel_goal_x, rel_goal_y, airspeed, bank_angle, flaps = s.split()
             goal_x = plane.pos_x + float(rel_goal_x)
             goal_y = plane.pos_y + float(rel_goal_y)
             airspeed = int(airspeed)
             bank_angle = int(bank_angle)
             flaps = int(flaps)
-            forward_slip = forward_slip.lower() == 't'
-            return goal_x, goal_y, airspeed, bank_angle, flaps, forward_slip, True
+            return goal_x, goal_y, airspeed, bank_angle, flaps, True
         except Exception:
             if s.strip().lower() in ["q", "quit"]:
-                return None, None, None, None, None, None, False
+                return None, None, None, None, None, False
             print("Invalid input, try again.")
 
 def fetch_photo(smap, plane, photo_index, origin_lat, origin_lon):
@@ -167,10 +166,10 @@ def main(origin_lat=28.106733, origin_lon=-80.679769, alt=500, airspeed=80, weig
 
         # Get new instruction from user
         if not plane.landing and running:
-            goal_x, goal_y, airspeed, bank_angle, flaps, forward_slip, running = get_instruction_from_input(plane)
+            goal_x, goal_y, airspeed, bank_angle, flaps, running = get_instruction_from_input(plane)
             if not running:
                 continue
-            new_instruction = Instruction(goal_x=goal_x, goal_y=goal_y, airspeed=airspeed, bank_angle=bank_angle, flaps=flaps, forward_slip=forward_slip)
+            new_instruction = Instruction(goal_x=goal_x, goal_y=goal_y, airspeed=airspeed, bank_angle=bank_angle, flaps=flaps)
             plane.give_instruction(new_instruction)
             plane.follow_instruction()
             photo_index += 1
