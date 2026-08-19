@@ -1,5 +1,4 @@
 import math
-import warnings
 
 from .constants import G_NM_HR_2, FT_PER_NM, MIN_BANK_ANGLE_DEG, MAX_BANK_ANGLE_DEG
 from .basic_math import desired_heading, signed_heading_diff
@@ -82,8 +81,8 @@ def integrate_turn_altitude_loss(glide_ratio_fn, start_heading_deg, turn_sign, r
     return loss
 
 
-def altitude_loss(plane, target_pos, flaps=0, alpha_deg=CONE_ALPHA_DEG,
-                   bank_fraction=BANK_ANGLE_FRACTION, n_integration_steps=TURN_INTEGRATION_STEPS):
+def _maneuver_altitude_loss(plane, target_pos, flaps=0, alpha_deg=CONE_ALPHA_DEG,
+                             bank_fraction=BANK_ANGLE_FRACTION, n_integration_steps=TURN_INTEGRATION_STEPS):
     """Estimate altitude loss (ft) for `plane` to glide from its current position to
     target_pos = (x, y) in nm, assuming it turns onto the target's bearing.
 
@@ -105,9 +104,8 @@ def altitude_loss(plane, target_pos, flaps=0, alpha_deg=CONE_ALPHA_DEG,
         remains at that point -- uncapped by alpha_deg, unlike the cone case, since this
         residual is a byproduct of the actual turn geometry rather than a design parameter.
 
-    flaps are not yet modeled here (they affect Plane.update_glide_ratio's glide ratio
-    but this function doesn't apply that penalty) -- warns if set, since the estimate
-    will be optimistic until that penalty is added here too.
+    flaps reduce glide ratio via cessna_glide_ratio's own flaps penalty, applied at every
+    glide_ratio_at call below.
 
     `plane` just needs pos_x/pos_y/heading/ground_speed/weight/density/airspeed,
     environment_variables.wind_direction/wind_strength, and instruction.bank_angle --
@@ -117,10 +115,6 @@ def altitude_loss(plane, target_pos, flaps=0, alpha_deg=CONE_ALPHA_DEG,
 
     Pure function: does not mutate `plane`.
     """
-    if flaps:
-        warnings.warn("altitude_loss does not yet account for flaps' glide-ratio penalty; "
-                       "estimate will be optimistic")
-
     if not (MIN_BANK_ANGLE_DEG <= plane.instruction.bank_angle <= MAX_BANK_ANGLE_DEG):
         raise ValueError(
             f"instruction.bank_angle ({plane.instruction.bank_angle}) must be between "
@@ -138,7 +132,7 @@ def altitude_loss(plane, target_pos, flaps=0, alpha_deg=CONE_ALPHA_DEG,
     def glide_ratio_at(heading_deg, bank_angle_deg=0.0):
         wind_delta = heading_deg - wind_direction
         return cessna_glide_ratio(plane.weight, plane.density, plane.airspeed, wind_delta,
-                                   wind_strength, bank_angle=bank_angle_deg)
+                                   wind_strength, bank_angle=bank_angle_deg, flaps=flaps)
 
     if abs(delta) <= alpha_deg:
         assumed_bank = bank_fraction * abs(delta)
@@ -200,6 +194,38 @@ def altitude_loss(plane, target_pos, flaps=0, alpha_deg=CONE_ALPHA_DEG,
     loss3 = d3 * FT_PER_NM / glide_ratio3
 
     return loss_turn + loss2 + loss3
+
+
+def altitude_loss(plane, target_pos, obstacle_clearance_ft, flaps=0, alpha_deg=CONE_ALPHA_DEG,
+                   bank_fraction=BANK_ANGLE_FRACTION, n_integration_steps=TURN_INTEGRATION_STEPS):
+    """Estimate the altitude cost for `plane` to fly the maneuver from _maneuver_altitude_loss
+    and check it against the altitude actually available (plane.alt - obstacle_clearance_ft).
+
+    Returns (loss, landing_info):
+      - If the plane has enough altitude to complete the maneuver: (loss_ft, None).
+      - If it doesn't: (-1, (heading, pos_x, pos_y)), where heading/pos_x/pos_y describe
+        where the plane runs out of usable altitude -- turned onto the target's bearing
+        and glided (wings level) as far as the available altitude allows. That's the
+        information Plane.initiate_landing needs (together with flaps/wind/temperature,
+        which it already has) to compute the landing distance and touchdown point.
+
+    Pure function: does not mutate `plane`.
+    """
+    loss = _maneuver_altitude_loss(plane, target_pos, flaps=flaps, alpha_deg=alpha_deg,
+                                    bank_fraction=bank_fraction, n_integration_steps=n_integration_steps)
+    available = plane.alt - obstacle_clearance_ft
+    if loss <= available:
+        return loss, None
+
+    b0 = desired_heading(plane.pos_x, plane.pos_y, target_pos[0], target_pos[1])
+    wind_delta = b0 - plane.environment_variables.wind_direction
+    glide_ratio, _ = cessna_glide_ratio(plane.weight, plane.density, plane.airspeed, wind_delta,
+                                         plane.environment_variables.wind_strength, flaps=flaps)
+    glide_distance_nm = glide_ratio * available / FT_PER_NM
+    dx, dy = compass_direction(b0)
+    end_x = plane.pos_x + glide_distance_nm * dx
+    end_y = plane.pos_y + glide_distance_nm * dy
+    return -1, (b0, end_x, end_y)
 
 
 if __name__ == "__main__":
@@ -283,7 +309,7 @@ if __name__ == "__main__":
         """Minimal duck-typed stand-in for Plane, so altitude_loss can be exercised here
         without importing plane.py (which itself imports this module)."""
         def __init__(self, pos_x, pos_y, heading, ground_speed, weight, density, airspeed,
-                     wind_direction, wind_strength, bank_angle):
+                     wind_direction, wind_strength, bank_angle, alt=1_000_000):
             self.pos_x = pos_x
             self.pos_y = pos_y
             self.heading = heading
@@ -291,6 +317,7 @@ if __name__ == "__main__":
             self.weight = weight
             self.density = density
             self.airspeed = airspeed
+            self.alt = alt
             self.environment_variables = _FakeEnvironmentVariables(wind_direction, wind_strength)
             self.instruction = _FakeInstruction(bank_angle)
 
@@ -304,28 +331,36 @@ if __name__ == "__main__":
     def test_altitude_loss_case1_matches_manual_calc():
         plane = _make_fake_plane()
         target = (0, 5)  # directly ahead of heading 0 (north)
-        loss = altitude_loss(plane, target)
+        loss, landing_info = altitude_loss(plane, target, obstacle_clearance_ft=0)
         glide_ratio, _ = cessna_glide_ratio(plane.weight, plane.density, plane.airspeed,
                                              0 - plane.environment_variables.wind_direction,
                                              plane.environment_variables.wind_strength, bank_angle=0)
         expected = 5 * FT_PER_NM / glide_ratio
-        passed = abs(loss - expected) < 1e-6
+        passed = landing_info is None and abs(loss - expected) < 1e-6
         print(f"altitude_loss_case1_matches_manual_calc: {passed}")
 
     def test_altitude_loss_case2_positive_and_monotonic():
         plane = _make_fake_plane()
-        loss_90 = altitude_loss(plane, (10, 0))
-        loss_170 = altitude_loss(plane, (1, -10))
+        loss_90, _ = altitude_loss(plane, (10, 0), obstacle_clearance_ft=0)
+        loss_170, _ = altitude_loss(plane, (1, -10), obstacle_clearance_ft=0)
         passed = loss_90 > 0 and loss_170 > 0 and loss_170 > loss_90
         print(f"altitude_loss_case2_positive_and_monotonic: {passed}")
 
     def test_altitude_loss_does_not_mutate_plane():
         plane = _make_fake_plane()
         before = (plane.pos_x, plane.pos_y, plane.heading)
-        altitude_loss(plane, (10, 0))
+        altitude_loss(plane, (10, 0), obstacle_clearance_ft=0)
         after = (plane.pos_x, plane.pos_y, plane.heading)
         passed = before == after
         print(f"altitude_loss_does_not_mutate_plane: {passed}")
+
+    def test_altitude_loss_reports_landing_info_when_short_on_altitude():
+        plane = _make_fake_plane()
+        plane.alt = 100  # far less than the ~675ft needed to reach (0, 5)
+        target = (0, 5)
+        loss, landing_info = altitude_loss(plane, target, obstacle_clearance_ft=0)
+        passed = loss == -1 and landing_info is not None and len(landing_info) == 3
+        print(f"altitude_loss_reports_landing_info_when_short_on_altitude: {passed}")
 
     def _make_plane_facing_west(wind_direction=0, wind_strength=0, bank_angle=30):
         from .constants import W_MAX, RHO_0, V_GLIDE
@@ -337,7 +372,7 @@ if __name__ == "__main__":
 
     def _print_vibes_case(x, y, bank_angle=30, wind_direction=0, wind_strength=0):
         plane = _make_plane_facing_west(wind_direction, wind_strength, bank_angle)
-        loss = altitude_loss(plane, (x, y))
+        loss, _ = altitude_loss(plane, (x, y), obstacle_clearance_ft=0)
         radius_ft = turn_radius_ft(plane.ground_speed, plane.instruction.bank_angle)
         radius_nm = radius_ft / FT_PER_NM
         print(f"x={x:>6} y={y:>6}  bank={bank_angle:>3}  wind={wind_direction}@{wind_strength:<3}"
@@ -399,7 +434,7 @@ if __name__ == "__main__":
         all_passed = True
         for x, y, bank, wind_dir, wind_str, expected in cases:
             plane = _make_plane_facing_west(wind_dir, wind_str, bank)
-            actual = altitude_loss(plane, (x, y))
+            actual, _ = altitude_loss(plane, (x, y), obstacle_clearance_ft=0)
             ok = abs(actual - expected) <= TOLERANCE_FT
             all_passed = all_passed and ok
             status = "OK" if ok else "FAIL"
@@ -415,7 +450,7 @@ if __name__ == "__main__":
         # a coordinated turn can never roll out pointed at a point inside its own circle.
         target = (-radius_nm * 0.1, radius_nm * 0.1)
         try:
-            altitude_loss(plane, target)
+            altitude_loss(plane, target, obstacle_clearance_ft=0)
             passed = False
         except ValueError:
             passed = True
@@ -429,7 +464,7 @@ if __name__ == "__main__":
         # heading error remains there (not capped at alpha_deg).
         plane = _make_plane_facing_west(wind_direction=0, wind_strength=0, bank_angle=20)
         target = (1, 0)
-        loss = altitude_loss(plane, target)
+        loss, _ = altitude_loss(plane, target, obstacle_clearance_ft=0)
 
         cur_pos = (plane.pos_x, plane.pos_y)
         b0 = desired_heading(cur_pos[0], cur_pos[1], target[0], target[1])
@@ -470,6 +505,7 @@ if __name__ == "__main__":
     test_altitude_loss_case1_matches_manual_calc()
     test_altitude_loss_case2_positive_and_monotonic()
     test_altitude_loss_does_not_mutate_plane()
+    test_altitude_loss_reports_landing_info_when_short_on_altitude()
     test_vibes_check_regression()
     test_altitude_loss_raises_when_target_inside_turn_circle()
     test_altitude_loss_residual_fallback_matches_manual_calc()

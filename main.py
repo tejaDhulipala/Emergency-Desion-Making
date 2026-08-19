@@ -171,7 +171,11 @@ def main(origin_lat=28.106733, origin_lon=-80.679769, alt=500, airspeed=80, weig
                 continue
             new_instruction = Instruction(goal_x=goal_x, goal_y=goal_y, airspeed=airspeed, bank_angle=bank_angle, flaps=flaps)
             plane.give_instruction(new_instruction)
-            plane.follow_instruction()
+            try:
+                plane.follow_instruction()
+            except ValueError as e:
+                print(f"Instruction not physically possible: {e}")
+                continue
             photo_index += 1
             photo_path, size_nm, _, _ = fetch_photo(smap, plane, photo_index, origin_lat, origin_lon)
             background = load_background(photo_path)
@@ -180,4 +184,4 @@ def main(origin_lat=28.106733, origin_lon=-80.679769, alt=500, airspeed=80, weig
     sys.exit()
 
 if __name__ == "__main__":
-    main()
+    main(alt=1500)

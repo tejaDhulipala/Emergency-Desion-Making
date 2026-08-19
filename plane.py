@@ -1,15 +1,13 @@
 import math
 from dataclasses import dataclass
 
-from utils import cessna_glide_ratio, density_from_altitude, desired_heading, landing_distance, compass_direction
+from utils import cessna_glide_ratio, density_from_altitude, desired_heading, signed_heading_diff, landing_distance, compass_direction
 from utils.constants import (
-    FT_PER_NM,
     OBSTACLE_CLEARANCE_FT,
     ENGINE_RPM_DEFAULT,
     VALID_FLAP_SETTINGS,
-    FLAP_GR_PENALTY_PER_10_DEG,
 )
-from utils.paths import altitude_loss
+from utils.paths import altitude_loss, turn_radius_ft, CONE_ALPHA_DEG
 
 @dataclass
 class EnvironmentVariables:
@@ -56,9 +54,8 @@ class Plane:
     def update_glide_ratio(self):
         self.density = density_from_altitude(self.alt, self.environment_variables.temperature)
         self.glide_ratio, self.ground_speed = cessna_glide_ratio(self.weight, self.density, self.airspeed,
-        self.heading - self.environment_variables.wind_direction, self.environment_variables.wind_strength)
-        if self.instruction.flaps:
-            self.glide_ratio -= (self.instruction.flaps / 10) * FLAP_GR_PENALTY_PER_10_DEG
+        self.heading - self.environment_variables.wind_direction, self.environment_variables.wind_strength,
+        flaps=self.instruction.flaps)
         print(f"Glide Ratio: {self.glide_ratio}")
 
 
@@ -72,11 +69,15 @@ class Plane:
         self.update_glide_ratio()  # refresh ground_speed (and glide_ratio) for the new airspeed before estimating loss
         target_pos = (self.instruction.goal_x, self.instruction.goal_y)
         target_heading = desired_heading(self.pos_x, self.pos_y, target_pos[0], target_pos[1])
-        loss = altitude_loss(self, target_pos, flaps=self.instruction.flaps)
-        available = self.alt - OBSTACLE_CLEARANCE_FT
+        if abs(signed_heading_diff(self.heading, target_heading)) <= CONE_ALPHA_DEG:
+            print("Target within no-turn envelope at current heading: gliding straight, no turn executed.")
+        else:
+            print("Target outside no-turn envelope: executing a coordinated turn onto the target bearing.")
+        loss, landing_info = altitude_loss(self, target_pos, OBSTACLE_CLEARANCE_FT, flaps=self.instruction.flaps)
         self.instruction_completed = True
-        print(f"Estimated altitude loss to target: {loss}")
-        if loss <= available:
+        print(f"Turn radius: {turn_radius_ft(self.ground_speed, self.instruction.bank_angle)} ft")
+        if landing_info is None:
+            print(f"Estimated altitude loss to target: {loss}")
             self.alt -= loss
             self.pos_x, self.pos_y = target_pos
             self.heading = target_heading
@@ -84,14 +85,10 @@ class Plane:
         else:
             # Not enough altitude to reach the target: turn onto the bearing and glide
             # as far as the remaining altitude allows, then land there.
-            self.heading = target_heading
-            self.update_glide_ratio()
-            glide_distance = self.glide_ratio * available / FT_PER_NM
-            dx, dy = compass_direction(self.heading)
-            self.pos_x += glide_distance * dx
-            self.pos_y += glide_distance * dy
+            self.heading, self.pos_x, self.pos_y = landing_info
             self.alt = OBSTACLE_CLEARANCE_FT
             self.aircraft_condition = "landed"
+            self.update_glide_ratio()
             self.initiate_landing()
         print(f"({self.pos_x}nm, {self.pos_y}nm, {self.alt}ft, {self.heading} degreees)")
     

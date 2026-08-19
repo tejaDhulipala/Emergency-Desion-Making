@@ -30,6 +30,9 @@ OBSTACLE_CLEARANCE_FT = 50        # height of obstacle landing distances are mea
 MIN_BANK_ANGLE_DEG = 5            # shallowest commandable turn bank (below this, turn radius blows up)
 MAX_BANK_ANGLE_DEG = 60           # steepest commandable turn bank
 
+MIN_AIRSPEED_KT = 35              # below this the Cessna 172 stalls
+MAX_AIRSPEED_KT = 160             # above this exceeds never-exceed speed
+
 # Flap effect on glide ratio
 FLAP_GR_PENALTY_PER_10_DEG = 1     # glide ratio lost per 10 degrees of flaps
 

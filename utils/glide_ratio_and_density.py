@@ -9,10 +9,12 @@ from .constants import (
     LAPSE_RATE,
     F_TO_R_OFFSET,
     BAROMETRIC_EXPONENT,
+    VALID_FLAP_SETTINGS,
+    FLAP_GR_PENALTY_PER_10_DEG,
 )
 
 def cessna_glide_ratio(weight=W_MAX, density=RHO_0, airspeed=V_GLIDE, wind_delta: float = 0.0, wind_speed=0,
-                        bank_angle: float = 0.0):
+                        bank_angle: float = 0.0, flaps: int = 0):
     """
     Calculate Cessna 172 glide ratio based on weight, air density, and airspeed.
 
@@ -23,6 +25,7 @@ def cessna_glide_ratio(weight=W_MAX, density=RHO_0, airspeed=V_GLIDE, wind_delta
     wind_delta (float): difference between aircraft heading and wind direction
     wind strength (float): wind strength in knots
     bank_angle (float): bank angle in degrees (default: 0, wings level)
+    flaps (int): flap setting in degrees, one of VALID_FLAP_SETTINGS (default: 0, flaps up)
 
     Returns:
     float: Adjusted glide ratio, dround speed
@@ -35,6 +38,8 @@ def cessna_glide_ratio(weight=W_MAX, density=RHO_0, airspeed=V_GLIDE, wind_delta
 
     if abs(bank_angle) >= 90:
         raise ValueError("bank_angle must be less than 90 degrees")
+
+    assert flaps in VALID_FLAP_SETTINGS
 
     # Calculate correction factors
     K_weight = 1 # (W_MAX / weight) ** 0.5
@@ -54,6 +59,8 @@ def cessna_glide_ratio(weight=W_MAX, density=RHO_0, airspeed=V_GLIDE, wind_delta
     # a known limitation (small at this app's altitudes) rather than fixed now.
     ground_speed = airspeed - wind_speed * math.cos(wind_delta / 180 * math.pi)
     glide_ratio *= ground_speed / airspeed
+
+    glide_ratio -= (flaps / 10) * FLAP_GR_PENALTY_PER_10_DEG
 
     return glide_ratio, ground_speed
 
@@ -164,6 +171,22 @@ if __name__ == "__main__":
             passed = True
         print(f"bank_angle_at_90_degrees_raises: {passed}")
 
+    def test_flaps_reduce_glide_ratio_by_penalty_per_10_deg():
+        from .constants import FLAP_GR_PENALTY_PER_10_DEG
+        baseline, _ = cessna_glide_ratio(W_MAX, RHO_0, V_GLIDE, 0.0, 0)
+        flaps_30, _ = cessna_glide_ratio(W_MAX, RHO_0, V_GLIDE, 0.0, 0, flaps=30)
+        expected = baseline - 3 * FLAP_GR_PENALTY_PER_10_DEG
+        passed = abs(flaps_30 - expected) < 1e-9
+        print(f"flaps_reduce_glide_ratio_by_penalty_per_10_deg: {passed}")
+
+    def test_invalid_flaps_setting_raises():
+        try:
+            cessna_glide_ratio(W_MAX, RHO_0, V_GLIDE, 0.0, 0, flaps=15)
+            passed = False
+        except AssertionError:
+            passed = True
+        print(f"invalid_flaps_setting_raises: {passed}")
+
     sweep()
     test_standard_conditions()
     test_tailwind_increases_glide_ratio()
@@ -175,3 +198,5 @@ if __name__ == "__main__":
     test_bank_angle_matches_cosine_scaling()
     test_negative_bank_angle_symmetric()
     test_bank_angle_at_90_degrees_raises()
+    test_flaps_reduce_glide_ratio_by_penalty_per_10_deg()
+    test_invalid_flaps_setting_raises()
